@@ -21,8 +21,12 @@ export interface InvoiceItem {
   hsnCode: string;
   rate: number;
   qty: number;
-  tax: number;
-  amount: number;
+  cgstPercent: number;
+  sgstPercent: number;
+  amount: number; // rate * qty
+  cgstAmount: number;
+  sgstAmount: number;
+  total: number; // amount + cgst + sgst
 }
 
 export interface Invoice {
@@ -36,7 +40,9 @@ export interface Invoice {
   po: string;
   items: InvoiceItem[];
   withoutGst: number;
-  gstAmount: number;
+  cgstTotal: number;
+  sgstTotal: number;
+  gstAmount: number; // cgst + sgst
   grandTotal: number;
   status: 'paid' | 'pending';
   createdAt: string;

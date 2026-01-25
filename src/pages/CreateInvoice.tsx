@@ -9,9 +9,23 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Trash2, Save, ArrowLeft, Upload } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+
+const createEmptyItem = (): InvoiceItem => ({
+  id: uuidv4(),
+  name: '',
+  hsnCode: '',
+  rate: 0,
+  qty: 1,
+  cgstPercent: 9,
+  sgstPercent: 9,
+  amount: 0,
+  cgstAmount: 0,
+  sgstAmount: 0,
+  total: 0
+});
 
 export default function CreateInvoice() {
   const navigate = useNavigate();
@@ -38,9 +52,7 @@ export default function CreateInvoice() {
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [po, setPo] = useState('');
   const [status, setStatus] = useState<'paid' | 'pending'>('pending');
-  const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([
-    { id: uuidv4(), name: '', hsnCode: '', rate: 0, qty: 1, tax: 18, amount: 0 }
-  ]);
+  const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([createEmptyItem()]);
 
   const [showCustomerSuggestions, setShowCustomerSuggestions] = useState(false);
   const [customerSuggestions, setCustomerSuggestions] = useState(customers);
@@ -80,10 +92,7 @@ export default function CreateInvoice() {
   };
 
   const addInvoiceItem = () => {
-    setInvoiceItems([
-      ...invoiceItems,
-      { id: uuidv4(), name: '', hsnCode: '', rate: 0, qty: 1, tax: 18, amount: 0 }
-    ]);
+    setInvoiceItems([...invoiceItems, createEmptyItem()]);
   };
 
   const removeInvoiceItem = (id: string) => {
@@ -96,13 +105,21 @@ export default function CreateInvoice() {
     setInvoiceItems(invoiceItems.map(item => {
       if (item.id === id) {
         const updated = { ...item, [field]: value };
-        // Calculate amount
+        // Calculate amounts
         const rate = field === 'rate' ? Number(value) : item.rate;
         const qty = field === 'qty' ? Number(value) : item.qty;
-        const tax = field === 'tax' ? Number(value) : item.tax;
+        const cgstPercent = field === 'cgstPercent' ? Number(value) : item.cgstPercent;
+        const sgstPercent = field === 'sgstPercent' ? Number(value) : item.sgstPercent;
+        
         const baseAmount = rate * qty;
-        const taxAmount = baseAmount * (tax / 100);
-        updated.amount = baseAmount + taxAmount;
+        const cgstAmount = baseAmount * (cgstPercent / 100);
+        const sgstAmount = baseAmount * (sgstPercent / 100);
+        
+        updated.amount = baseAmount;
+        updated.cgstAmount = cgstAmount;
+        updated.sgstAmount = sgstAmount;
+        updated.total = baseAmount + cgstAmount + sgstAmount;
+        
         return updated;
       }
       return item;
@@ -115,14 +132,18 @@ export default function CreateInvoice() {
       setInvoiceItems(invoiceItems.map(item => {
         if (item.id === invoiceItemId) {
           const baseAmount = selectedItem.rate * item.qty;
-          const taxAmount = baseAmount * (item.tax / 100);
+          const cgstAmount = baseAmount * (item.cgstPercent / 100);
+          const sgstAmount = baseAmount * (item.sgstPercent / 100);
           return {
             ...item,
             itemId: selectedItem.id,
             name: selectedItem.name,
             hsnCode: selectedItem.hsnCode,
             rate: selectedItem.rate,
-            amount: baseAmount + taxAmount,
+            amount: baseAmount,
+            cgstAmount,
+            sgstAmount,
+            total: baseAmount + cgstAmount + sgstAmount,
           };
         }
         return item;
@@ -131,10 +152,12 @@ export default function CreateInvoice() {
   };
 
   const calculations = useMemo(() => {
-    const withoutGst = invoiceItems.reduce((sum, item) => sum + (item.rate * item.qty), 0);
-    const gstAmount = invoiceItems.reduce((sum, item) => sum + (item.rate * item.qty * item.tax / 100), 0);
-    const grandTotal = withoutGst + gstAmount;
-    return { withoutGst, gstAmount, grandTotal };
+    const withoutGst = invoiceItems.reduce((sum, item) => sum + item.amount, 0);
+    const cgstTotal = invoiceItems.reduce((sum, item) => sum + item.cgstAmount, 0);
+    const sgstTotal = invoiceItems.reduce((sum, item) => sum + item.sgstAmount, 0);
+    const gstAmount = cgstTotal + sgstTotal;
+    const grandTotal = invoiceItems.reduce((sum, item) => sum + item.total, 0);
+    return { withoutGst, cgstTotal, sgstTotal, gstAmount, grandTotal };
   }, [invoiceItems]);
 
   const formatCurrency = (amount: number) => {
@@ -189,6 +212,8 @@ export default function CreateInvoice() {
       po: po.trim(),
       items: invoiceItems,
       withoutGst: calculations.withoutGst,
+      cgstTotal: calculations.cgstTotal,
+      sgstTotal: calculations.sgstTotal,
       gstAmount: calculations.gstAmount,
       grandTotal: calculations.grandTotal,
       status,
@@ -229,7 +254,7 @@ export default function CreateInvoice() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="relative">
-                  <Label htmlFor="customerName">Customer Name *</Label>
+                  <Label htmlFor="customerName">Customer Name (M/s) *</Label>
                   <Input
                     id="customerName"
                     value={customerName}
@@ -253,7 +278,7 @@ export default function CreateInvoice() {
                   )}
                 </div>
                 <div>
-                  <Label htmlFor="gstin">GSTIN Number</Label>
+                  <Label htmlFor="gstin">GSTIN No</Label>
                   <Input
                     id="gstin"
                     value={gstin}
@@ -294,7 +319,7 @@ export default function CreateInvoice() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="date">Date *</Label>
+                  <Label htmlFor="date">Invoice Date *</Label>
                   <Input
                     id="date"
                     type="date"
@@ -304,12 +329,12 @@ export default function CreateInvoice() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="po">PO Number (Optional)</Label>
+                  <Label htmlFor="po">Order No (Optional)</Label>
                   <Input
                     id="po"
                     value={po}
                     onChange={(e) => setPo(e.target.value)}
-                    placeholder="Purchase Order"
+                    placeholder="Order/PO Number"
                     className="mt-1"
                   />
                 </div>
@@ -320,7 +345,7 @@ export default function CreateInvoice() {
           {/* Items */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Items</CardTitle>
+              <CardTitle>Items (Particulars)</CardTitle>
               <Button onClick={addInvoiceItem} size="sm" className="gap-1">
                 <Plus size={16} />
                 Add Item
@@ -344,7 +369,7 @@ export default function CreateInvoice() {
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div className="col-span-2">
-                      <Label>Item Name *</Label>
+                      <Label>Particulars (Item Name) *</Label>
                       <div className="flex gap-2 mt-1">
                         <Input
                           value={item.name}
@@ -369,11 +394,11 @@ export default function CreateInvoice() {
                       </div>
                     </div>
                     <div>
-                      <Label>HSN Code</Label>
+                      <Label>HSN</Label>
                       <Input
                         value={item.hsnCode}
                         onChange={(e) => updateInvoiceItem(item.id, 'hsnCode', e.target.value)}
-                        placeholder="HSN"
+                        placeholder="HSN Code"
                         className="mt-1"
                       />
                     </div>
@@ -388,7 +413,7 @@ export default function CreateInvoice() {
                       />
                     </div>
                     <div>
-                      <Label>Qty</Label>
+                      <Label>QTY</Label>
                       <Input
                         type="number"
                         value={item.qty || ''}
@@ -398,28 +423,57 @@ export default function CreateInvoice() {
                       />
                     </div>
                     <div>
-                      <Label>Tax (%)</Label>
+                      <Label>CGST (%)</Label>
                       <Select 
-                        value={String(item.tax)} 
-                        onValueChange={(val) => updateInvoiceItem(item.id, 'tax', parseInt(val))}
+                        value={String(item.cgstPercent)} 
+                        onValueChange={(val) => updateInvoiceItem(item.id, 'cgstPercent', parseFloat(val))}
                       >
                         <SelectTrigger className="mt-1">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="0">0%</SelectItem>
-                          <SelectItem value="5">5%</SelectItem>
-                          <SelectItem value="12">12%</SelectItem>
-                          <SelectItem value="18">18%</SelectItem>
-                          <SelectItem value="28">28%</SelectItem>
+                          <SelectItem value="2.5">2.5%</SelectItem>
+                          <SelectItem value="6">6%</SelectItem>
+                          <SelectItem value="9">9%</SelectItem>
+                          <SelectItem value="14">14%</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="col-span-2 md:col-span-1">
-                      <Label>Amount</Label>
+                    <div>
+                      <Label>SGST (%)</Label>
+                      <Select 
+                        value={String(item.sgstPercent)} 
+                        onValueChange={(val) => updateInvoiceItem(item.id, 'sgstPercent', parseFloat(val))}
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0">0%</SelectItem>
+                          <SelectItem value="2.5">2.5%</SelectItem>
+                          <SelectItem value="6">6%</SelectItem>
+                          <SelectItem value="9">9%</SelectItem>
+                          <SelectItem value="14">14%</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Total</Label>
                       <div className="mt-1 h-10 px-3 flex items-center bg-muted/30 rounded-md border font-semibold">
-                        {formatCurrency(item.amount)}
+                        {formatCurrency(item.total)}
                       </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3 pt-2 border-t text-sm">
+                    <div className="text-muted-foreground">
+                      Amount: <span className="font-medium text-foreground">{formatCurrency(item.amount)}</span>
+                    </div>
+                    <div className="text-muted-foreground">
+                      CGST ({item.cgstPercent}%): <span className="font-medium text-foreground">{formatCurrency(item.cgstAmount)}</span>
+                    </div>
+                    <div className="text-muted-foreground">
+                      SGST ({item.sgstPercent}%): <span className="font-medium text-foreground">{formatCurrency(item.sgstAmount)}</span>
                     </div>
                   </div>
                 </div>
@@ -437,11 +491,19 @@ export default function CreateInvoice() {
             <CardContent className="space-y-4">
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Subtotal (Without GST)</span>
+                  <span className="text-muted-foreground">Subtotal (Amount)</span>
                   <span className="font-medium">{formatCurrency(calculations.withoutGst)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">GST Amount</span>
+                  <span className="text-muted-foreground">CGST Total</span>
+                  <span className="font-medium">{formatCurrency(calculations.cgstTotal)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">SGST Total</span>
+                  <span className="font-medium">{formatCurrency(calculations.sgstTotal)}</span>
+                </div>
+                <div className="flex justify-between text-sm border-t pt-2">
+                  <span className="text-muted-foreground">Total Tax Amount</span>
                   <span className="font-medium">{formatCurrency(calculations.gstAmount)}</span>
                 </div>
                 <div className="border-t pt-3">
