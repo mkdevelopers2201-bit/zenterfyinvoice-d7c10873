@@ -12,6 +12,7 @@ import {
   Receipt
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { UserMenu } from './UserMenu';
 
 interface NavItemProps {
   to: string;
@@ -57,13 +58,16 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <Receipt className="h-8 w-8 text-primary" />
           <span className="text-xl font-bold text-foreground">InvoicePro</span>
         </div>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-        >
-          {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
-        </Button>
+        <div className="flex items-center gap-2">
+          <UserMenu />
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+          </Button>
+        </div>
       </div>
 
       {/* Mobile Sidebar Overlay */}
@@ -80,9 +84,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="p-6">
-          <div className="flex items-center gap-2 mb-8">
-            <Receipt className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold text-foreground">InvoicePro</span>
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-2">
+              <Receipt className="h-8 w-8 text-primary" />
+              <span className="text-xl font-bold text-foreground">InvoicePro</span>
+            </div>
+            <div className="hidden lg:block">
+              <UserMenu />
+            </div>
           </div>
           
           <nav className="space-y-2">

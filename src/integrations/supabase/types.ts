@@ -21,6 +21,7 @@ export type Database = {
           gstin: string | null
           id: string
           name: string
+          user_id: string | null
         }
         Insert: {
           address?: string | null
@@ -28,6 +29,7 @@ export type Database = {
           gstin?: string | null
           id?: string
           name: string
+          user_id?: string | null
         }
         Update: {
           address?: string | null
@@ -35,6 +37,7 @@ export type Database = {
           gstin?: string | null
           id?: string
           name?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -55,6 +58,7 @@ export type Database = {
           po: string | null
           sgstTotal: number | null
           status: string | null
+          user_id: string | null
           withoutGst: number | null
         }
         Insert: {
@@ -73,6 +77,7 @@ export type Database = {
           po?: string | null
           sgstTotal?: number | null
           status?: string | null
+          user_id?: string | null
           withoutGst?: number | null
         }
         Update: {
@@ -91,6 +96,7 @@ export type Database = {
           po?: string | null
           sgstTotal?: number | null
           status?: string | null
+          user_id?: string | null
           withoutGst?: number | null
         }
         Relationships: [
@@ -110,6 +116,7 @@ export type Database = {
           id: string
           name: string
           rate: number | null
+          user_id: string | null
         }
         Insert: {
           createdAt?: string | null
@@ -117,6 +124,7 @@ export type Database = {
           id?: string
           name: string
           rate?: number | null
+          user_id?: string | null
         }
         Update: {
           createdAt?: string | null
@@ -124,6 +132,7 @@ export type Database = {
           id?: string
           name?: string
           rate?: number | null
+          user_id?: string | null
         }
         Relationships: []
       }

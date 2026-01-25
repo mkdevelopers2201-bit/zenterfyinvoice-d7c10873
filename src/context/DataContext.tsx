@@ -1,22 +1,22 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Customer, Item, Invoice } from '@/types/invoice';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { toast } from 'sonner';
-import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface DataContextType {
   customers: Customer[];
   items: Item[];
   invoices: Invoice[];
-  addCustomer: (customer: Omit<Customer, 'id' | 'createdAt'>) => Customer;
-  updateCustomer: (id: string, customer: Partial<Customer>) => void;
-  deleteCustomer: (id: string) => void;
-  addItem: (item: Omit<Item, 'id' | 'createdAt'>) => Item;
-  updateItem: (id: string, item: Partial<Item>) => void;
-  deleteItem: (id: string) => void;
-  addInvoice: (invoice: Omit<Invoice, 'id' | 'createdAt'>) => Invoice;
-  updateInvoice: (id: string, invoice: Partial<Invoice>) => void;
-  deleteInvoice: (id: string) => void;
+  addCustomer: (customer: Omit<Customer, 'id' | 'createdAt'>) => Promise<Customer>;
+  updateCustomer: (id: string, customer: Partial<Customer>) => Promise<void>;
+  deleteCustomer: (id: string) => Promise<void>;
+  addItem: (item: Omit<Item, 'id' | 'createdAt'>) => Promise<Item>;
+  updateItem: (id: string, item: Partial<Item>) => Promise<void>;
+  deleteItem: (id: string) => Promise<void>;
+  addInvoice: (invoice: Omit<Invoice, 'id' | 'createdAt'>) => Promise<Invoice>;
+  updateInvoice: (id: string, invoice: Partial<Invoice>) => Promise<void>;
+  deleteInvoice: (id: string) => Promise<void>;
   getCustomerById: (id: string) => Customer | undefined;
   getItemById: (id: string) => Item | undefined;
   getInvoiceById: (id: string) => Invoice | undefined;
@@ -24,15 +24,89 @@ interface DataContextType {
   getItemByName: (name: string) => Item | undefined;
   getNextInvoiceNumber: () => string;
   isLoading: boolean;
+  refreshData: () => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [customers, setCustomers] = useLocalStorage<Customer[]>('invoice-customers', []);
-  const [items, setItems] = useLocalStorage<Item[]>('invoice-items', []);
-  const [invoices, setInvoices] = useLocalStorage<Invoice[]>('invoice-invoices', []);
-  const [isLoading, setIsLoading] = useState(false);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
+
+  const fetchData = async () => {
+    if (!user) {
+      setCustomers([]);
+      setItems([]);
+      setInvoices([]);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const [customersRes, itemsRes, invoicesRes] = await Promise.all([
+        supabase.from('customers').select('*').order('createdAt', { ascending: false }),
+        supabase.from('items').select('*').order('createdAt', { ascending: false }),
+        supabase.from('invoices').select('*').order('createdAt', { ascending: false }),
+      ]);
+
+      if (customersRes.error) throw customersRes.error;
+      if (itemsRes.error) throw itemsRes.error;
+      if (invoicesRes.error) throw invoicesRes.error;
+
+      setCustomers(customersRes.data.map(c => ({
+        id: c.id,
+        name: c.name,
+        gstin: c.gstin || '',
+        address: c.address || '',
+        createdAt: c.createdAt || new Date().toISOString(),
+      })));
+
+      setItems(itemsRes.data.map(i => ({
+        id: i.id,
+        name: i.name,
+        hsnCode: i.hsncode || '',
+        rate: i.rate || 0,
+        createdAt: i.createdAt || new Date().toISOString(),
+      })));
+
+      setInvoices(invoicesRes.data.map(inv => ({
+        id: inv.id,
+        invoiceNumber: inv.invoiceNumber,
+        date: inv.date || new Date().toISOString(),
+        customerId: inv.customerId || '',
+        customerName: inv.customerName || '',
+        gstin: inv.gstin || '',
+        address: inv.address || '',
+        po: inv.po || '',
+        items: (inv.items as any[]) || [],
+        withoutGst: inv.withoutGst || 0,
+        cgstTotal: inv.cgstTotal || 0,
+        sgstTotal: inv.sgstTotal || 0,
+        gstAmount: inv.gstAmount || 0,
+        grandTotal: inv.grandTotal || 0,
+        status: (inv.status as 'paid' | 'pending') || 'pending',
+        createdAt: inv.createdAt || new Date().toISOString(),
+        updatedAt: inv.createdAt || new Date().toISOString(),
+      })));
+    } catch (error: any) {
+      console.error('Error fetching data:', error);
+      toast.error('Failed to load data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [user]);
+
+  const refreshData = async () => {
+    await fetchData();
+  };
 
   // Generate next invoice number based on existing invoices
   const getNextInvoiceNumber = () => {
@@ -40,7 +114,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return 'INV-001';
     }
     
-    // Extract numeric parts from invoice numbers and find max
     const numbers = invoices.map(inv => {
       const match = inv.invoiceNumber.match(/(\d+)$/);
       return match ? parseInt(match[1], 10) : 0;
@@ -52,59 +125,166 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // Customer Actions
-  const addCustomer = (customer: Omit<Customer, 'id' | 'createdAt'>): Customer => {
+  const addCustomer = async (customer: Omit<Customer, 'id' | 'createdAt'>): Promise<Customer> => {
+    if (!user) throw new Error('Not authenticated');
+
+    const { data, error } = await supabase.from('customers').insert({
+      name: customer.name,
+      gstin: customer.gstin,
+      address: customer.address,
+      user_id: user.id,
+    }).select().single();
+
+    if (error) throw error;
+
     const newCustomer: Customer = {
-      ...customer,
-      id: uuidv4(),
-      createdAt: new Date().toISOString(),
+      id: data.id,
+      name: data.name,
+      gstin: data.gstin || '',
+      address: data.address || '',
+      createdAt: data.createdAt || new Date().toISOString(),
     };
-    setCustomers([newCustomer, ...customers]);
+
+    setCustomers(prev => [newCustomer, ...prev]);
     return newCustomer;
   };
 
-  const updateCustomer = (id: string, updatedFields: Partial<Customer>) => {
+  const updateCustomer = async (id: string, updatedFields: Partial<Customer>) => {
+    const { error } = await supabase.from('customers').update({
+      name: updatedFields.name,
+      gstin: updatedFields.gstin,
+      address: updatedFields.address,
+    }).eq('id', id);
+
+    if (error) throw error;
     setCustomers(customers.map(c => (c.id === id ? { ...c, ...updatedFields } : c)));
   };
 
-  const deleteCustomer = (id: string) => {
+  const deleteCustomer = async (id: string) => {
+    const { error } = await supabase.from('customers').delete().eq('id', id);
+    if (error) throw error;
     setCustomers(customers.filter(c => c.id !== id));
   };
 
   // Item Actions
-  const addItem = (item: Omit<Item, 'id' | 'createdAt'>): Item => {
+  const addItem = async (item: Omit<Item, 'id' | 'createdAt'>): Promise<Item> => {
+    if (!user) throw new Error('Not authenticated');
+
+    const { data, error } = await supabase.from('items').insert({
+      name: item.name,
+      hsncode: item.hsnCode,
+      rate: item.rate,
+      user_id: user.id,
+    }).select().single();
+
+    if (error) throw error;
+
     const newItem: Item = {
-      ...item,
-      id: uuidv4(),
-      createdAt: new Date().toISOString(),
+      id: data.id,
+      name: data.name,
+      hsnCode: data.hsncode || '',
+      rate: data.rate || 0,
+      createdAt: data.createdAt || new Date().toISOString(),
     };
-    setItems([newItem, ...items]);
+
+    setItems(prev => [newItem, ...prev]);
     return newItem;
   };
 
-  const updateItem = (id: string, updatedFields: Partial<Item>) => {
+  const updateItem = async (id: string, updatedFields: Partial<Item>) => {
+    const { error } = await supabase.from('items').update({
+      name: updatedFields.name,
+      hsncode: updatedFields.hsnCode,
+      rate: updatedFields.rate,
+    }).eq('id', id);
+
+    if (error) throw error;
     setItems(items.map(i => (i.id === id ? { ...i, ...updatedFields } : i)));
   };
 
-  const deleteItem = (id: string) => {
+  const deleteItem = async (id: string) => {
+    const { error } = await supabase.from('items').delete().eq('id', id);
+    if (error) throw error;
     setItems(items.filter(i => i.id !== id));
   };
 
   // Invoice Actions
-  const addInvoice = (invoice: Omit<Invoice, 'id' | 'createdAt'>): Invoice => {
+  const addInvoice = async (invoice: Omit<Invoice, 'id' | 'createdAt'>): Promise<Invoice> => {
+    if (!user) throw new Error('Not authenticated');
+
+    const itemsJson = JSON.parse(JSON.stringify(invoice.items));
+
+    const { data, error } = await supabase.from('invoices').insert({
+      invoiceNumber: invoice.invoiceNumber,
+      date: invoice.date,
+      customerId: invoice.customerId,
+      customerName: invoice.customerName,
+      gstin: invoice.gstin,
+      address: invoice.address,
+      po: invoice.po,
+      items: itemsJson,
+      withoutGst: invoice.withoutGst,
+      cgstTotal: invoice.cgstTotal,
+      sgstTotal: invoice.sgstTotal,
+      gstAmount: invoice.gstAmount,
+      grandTotal: invoice.grandTotal,
+      status: invoice.status,
+      user_id: user.id,
+    }).select().single();
+
+    if (error) throw error;
+
     const newInvoice: Invoice = {
-      ...invoice,
-      id: uuidv4(),
-      createdAt: new Date().toISOString(),
+      id: data.id,
+      invoiceNumber: data.invoiceNumber,
+      date: data.date || new Date().toISOString(),
+      customerId: data.customerId || '',
+      customerName: data.customerName || '',
+      gstin: data.gstin || '',
+      address: data.address || '',
+      po: data.po || '',
+      items: (data.items as any[]) || [],
+      withoutGst: data.withoutGst || 0,
+      cgstTotal: data.cgstTotal || 0,
+      sgstTotal: data.sgstTotal || 0,
+      gstAmount: data.gstAmount || 0,
+      grandTotal: data.grandTotal || 0,
+      status: (data.status as 'paid' | 'pending') || 'pending',
+      createdAt: data.createdAt || new Date().toISOString(),
+      updatedAt: data.createdAt || new Date().toISOString(),
     };
-    setInvoices([newInvoice, ...invoices]);
+
+    setInvoices(prev => [newInvoice, ...prev]);
     return newInvoice;
   };
 
-  const updateInvoice = (id: string, updatedFields: Partial<Invoice>) => {
+  const updateInvoice = async (id: string, updatedFields: Partial<Invoice>) => {
+    const itemsJson = updatedFields.items ? JSON.parse(JSON.stringify(updatedFields.items)) : undefined;
+    
+    const { error } = await supabase.from('invoices').update({
+      invoiceNumber: updatedFields.invoiceNumber,
+      date: updatedFields.date,
+      customerId: updatedFields.customerId,
+      customerName: updatedFields.customerName,
+      gstin: updatedFields.gstin,
+      address: updatedFields.address,
+      po: updatedFields.po,
+      items: itemsJson,
+      withoutGst: updatedFields.withoutGst,
+      cgstTotal: updatedFields.cgstTotal,
+      sgstTotal: updatedFields.sgstTotal,
+      gstAmount: updatedFields.gstAmount,
+      grandTotal: updatedFields.grandTotal,
+      status: updatedFields.status,
+    }).eq('id', id);
+
+    if (error) throw error;
     setInvoices(invoices.map(inv => (inv.id === id ? { ...inv, ...updatedFields } : inv)));
   };
 
-  const deleteInvoice = (id: string) => {
+  const deleteInvoice = async (id: string) => {
+    const { error } = await supabase.from('invoices').delete().eq('id', id);
+    if (error) throw error;
     setInvoices(invoices.filter(inv => inv.id !== id));
   };
 
@@ -126,7 +306,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       getCustomerById, getItemById, getInvoiceById,
       getCustomerByName, getItemByName,
       getNextInvoiceNumber,
-      isLoading
+      isLoading,
+      refreshData,
     }}>
       {children}
     </DataContext.Provider>

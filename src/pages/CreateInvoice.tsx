@@ -168,7 +168,7 @@ export default function CreateInvoice() {
     }).format(amount);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!customerName.trim()) {
       toast.error('Please enter customer name');
       return;
@@ -178,57 +178,62 @@ export default function CreateInvoice() {
       return;
     }
 
-    // Auto-create customer if not exists
-    let existingCustomer = getCustomerByName(customerName);
-    if (!existingCustomer && customerName.trim()) {
-      existingCustomer = addCustomer({
-        name: customerName.trim(),
+    try {
+      // Auto-create customer if not exists
+      let existingCustomer = getCustomerByName(customerName);
+      if (!existingCustomer && customerName.trim()) {
+        existingCustomer = await addCustomer({
+          name: customerName.trim(),
+          gstin: gstin.trim(),
+          address: address.trim(),
+        });
+        toast.success(`Customer "${customerName}" added to your customers list`);
+      }
+
+      // Auto-create items if not exists
+      for (const invItem of invoiceItems) {
+        const existingItem = getItemByName(invItem.name);
+        if (!existingItem && invItem.name.trim()) {
+          await addItem({
+            name: invItem.name.trim(),
+            hsnCode: invItem.hsnCode.trim(),
+            rate: invItem.rate,
+          });
+          toast.success(`Item "${invItem.name}" added to your items list`);
+        }
+      }
+
+      const invoiceData = {
+        customerId: existingCustomer?.id,
+        customerName: customerName.trim(),
         gstin: gstin.trim(),
         address: address.trim(),
-      });
-      toast.success(`Customer "${customerName}" added to your customers list`);
-    }
+        invoiceNumber,
+        date,
+        po: po.trim(),
+        items: invoiceItems,
+        withoutGst: calculations.withoutGst,
+        cgstTotal: calculations.cgstTotal,
+        sgstTotal: calculations.sgstTotal,
+        gstAmount: calculations.gstAmount,
+        grandTotal: calculations.grandTotal,
+        status,
+        updatedAt: new Date().toISOString(),
+      };
 
-    // Auto-create items if not exists
-    invoiceItems.forEach(invItem => {
-      const existingItem = getItemByName(invItem.name);
-      if (!existingItem && invItem.name.trim()) {
-        addItem({
-          name: invItem.name.trim(),
-          hsnCode: invItem.hsnCode.trim(),
-          rate: invItem.rate,
-        });
-        toast.success(`Item "${invItem.name}" added to your items list`);
+      if (editId) {
+        await updateInvoice(editId, invoiceData);
+        toast.success('Invoice updated successfully!');
+      } else {
+        await addInvoice(invoiceData);
+        toast.success('Invoice created successfully!');
       }
-    });
 
-    const invoiceData = {
-      customerId: existingCustomer?.id,
-      customerName: customerName.trim(),
-      gstin: gstin.trim(),
-      address: address.trim(),
-      invoiceNumber,
-      date,
-      po: po.trim(),
-      items: invoiceItems,
-      withoutGst: calculations.withoutGst,
-      cgstTotal: calculations.cgstTotal,
-      sgstTotal: calculations.sgstTotal,
-      gstAmount: calculations.gstAmount,
-      grandTotal: calculations.grandTotal,
-      status,
-      updatedAt: new Date().toISOString(),
-    };
-
-    if (editId) {
-      updateInvoice(editId, invoiceData);
-      toast.success('Invoice updated successfully!');
-    } else {
-      addInvoice(invoiceData);
-      toast.success('Invoice created successfully!');
+      navigate('/sales-register');
+    } catch (error: any) {
+      console.error('Error saving invoice:', error);
+      toast.error(error.message || 'Failed to save invoice');
     }
-
-    navigate('/sales-register');
   };
 
   return (
