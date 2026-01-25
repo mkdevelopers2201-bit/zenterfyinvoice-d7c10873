@@ -14,7 +14,119 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      customers: {
+        Row: {
+          address: string | null
+          createdAt: string | null
+          gstin: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          address?: string | null
+          createdAt?: string | null
+          gstin?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          address?: string | null
+          createdAt?: string | null
+          gstin?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      invoices: {
+        Row: {
+          address: string | null
+          cgstTotal: number | null
+          createdAt: string | null
+          customerId: string | null
+          customerName: string | null
+          date: string | null
+          grandTotal: number | null
+          gstAmount: number | null
+          gstin: string | null
+          id: string
+          invoiceNumber: string
+          items: Json | null
+          po: string | null
+          sgstTotal: number | null
+          status: string | null
+          withoutGst: number | null
+        }
+        Insert: {
+          address?: string | null
+          cgstTotal?: number | null
+          createdAt?: string | null
+          customerId?: string | null
+          customerName?: string | null
+          date?: string | null
+          grandTotal?: number | null
+          gstAmount?: number | null
+          gstin?: string | null
+          id?: string
+          invoiceNumber: string
+          items?: Json | null
+          po?: string | null
+          sgstTotal?: number | null
+          status?: string | null
+          withoutGst?: number | null
+        }
+        Update: {
+          address?: string | null
+          cgstTotal?: number | null
+          createdAt?: string | null
+          customerId?: string | null
+          customerName?: string | null
+          date?: string | null
+          grandTotal?: number | null
+          gstAmount?: number | null
+          gstin?: string | null
+          id?: string
+          invoiceNumber?: string
+          items?: Json | null
+          po?: string | null
+          sgstTotal?: number | null
+          status?: string | null
+          withoutGst?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_customerId_fkey"
+            columns: ["customerId"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      items: {
+        Row: {
+          createdAt: string | null
+          hsncode: string | null
+          id: string
+          name: string
+          rate: number | null
+        }
+        Insert: {
+          createdAt?: string | null
+          hsncode?: string | null
+          id?: string
+          name: string
+          rate?: number | null
+        }
+        Update: {
+          createdAt?: string | null
+          hsncode?: string | null
+          id?: string
+          name?: string
+          rate?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
