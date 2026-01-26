@@ -1,14 +1,24 @@
+import { useState } from 'react';
 import { useData } from '@/context/DataContext';
 import { StatCard } from '@/components/ui/stat-card';
-import { FileText, Users, Package, IndianRupee, Clock, CheckCircle } from 'lucide-react';
+import { FileText, Users, Package, IndianRupee, Clock, CheckCircle, Eye } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { InvoicePreview } from '@/components/InvoicePreview';
+import { Invoice } from '@/types/invoice';
 
 export default function Dashboard() {
   const { invoices, customers, items } = useData();
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
   const totalRevenue = invoices.reduce((sum, inv) => sum + inv.grandTotal, 0);
   const paidInvoices = invoices.filter(inv => inv.status === 'paid');
@@ -84,7 +94,7 @@ export default function Dashboard() {
                 {recentInvoices.map((invoice) => (
                   <div 
                     key={invoice.id} 
-                    className="flex items-center justify-between p-4 bg-background rounded-lg border"
+                    className="flex items-center justify-between p-4 bg-card rounded-lg border"
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
@@ -95,11 +105,21 @@ export default function Dashboard() {
                       </div>
                       <p className="text-sm text-muted-foreground mt-1">{invoice.customerName}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-foreground">{formatCurrency(invoice.grandTotal)}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(invoice.date), 'dd MMM yyyy')}
-                      </p>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="font-semibold text-foreground">{formatCurrency(invoice.grandTotal)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(invoice.date), 'dd MMM yyyy')}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setSelectedInvoice(invoice)}
+                        title="View Invoice"
+                      >
+                        <Eye size={16} />
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -146,6 +166,25 @@ export default function Dashboard() {
           </Card>
         </div>
       </div>
+
+      {/* View Invoice Dialog */}
+      <Dialog open={!!selectedInvoice} onOpenChange={() => setSelectedInvoice(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Invoice Preview</DialogTitle>
+          </DialogHeader>
+          {selectedInvoice && (
+            <div className="space-y-4">
+              <InvoicePreview invoice={selectedInvoice} />
+              <div className="flex justify-end">
+                <Button variant="outline" onClick={() => setSelectedInvoice(null)}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

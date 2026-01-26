@@ -185,7 +185,7 @@ export default function Items() {
                           <Button 
                             variant="ghost" 
                             size="icon"
-                            className="text-destructive hover:bg-destructive/10"
+                            className="hover:bg-muted text-destructive"
                             onClick={() => {
                               setItemToDelete(item.id);
                               setDeleteDialogOpen(true);
@@ -239,7 +239,7 @@ export default function Items() {
                 type="number"
                 value={formData.rate || ''}
                 onChange={(e) => setFormData({ ...formData, rate: parseFloat(e.target.value) || 0 })}
-                placeholder="0.00"
+                placeholder=""
                 className="mt-1"
               />
             </div>

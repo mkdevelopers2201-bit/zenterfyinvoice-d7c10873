@@ -176,7 +176,7 @@ export default function Customers() {
                           <Button 
                             variant="ghost" 
                             size="icon"
-                            className="text-destructive hover:bg-destructive/10"
+                            className="hover:bg-muted text-destructive"
                             onClick={() => {
                               setCustomerToDelete(customer.id);
                               setDeleteDialogOpen(true);

@@ -179,7 +179,7 @@ export default function SalesRegister() {
                           <Button 
                             variant="ghost" 
                             size="icon"
-                            className="text-destructive hover:bg-destructive/10"
+                            className="hover:bg-muted text-destructive"
                             onClick={() => {
                               setInvoiceToDelete(invoice.id);
                               setDeleteDialogOpen(true);

@@ -29,6 +29,22 @@ interface DataContextType {
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
+// Helper function to get financial year string (e.g., "2025-26")
+const getFinancialYear = (): string => {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth(); // 0-11
+  
+  // Financial year starts in April (month 3)
+  if (currentMonth >= 3) {
+    // April onwards - current year to next year
+    return `${currentYear}-${String(currentYear + 1).slice(-2)}`;
+  } else {
+    // Jan to March - previous year to current year
+    return `${currentYear - 1}-${String(currentYear).slice(-2)}`;
+  }
+};
+
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [items, setItems] = useState<Item[]>([]);
@@ -109,19 +125,28 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // Generate next invoice number based on existing invoices
+  // Format: YYYY-YY-XXX (e.g., 2025-26-001)
   const getNextInvoiceNumber = () => {
-    if (invoices.length === 0) {
-      return 'INV-001';
+    const financialYear = getFinancialYear();
+    const prefix = `${financialYear}-`;
+    
+    // Filter invoices that match current financial year
+    const fyInvoices = invoices.filter(inv => inv.invoiceNumber.startsWith(prefix));
+    
+    if (fyInvoices.length === 0) {
+      return `${prefix}001`;
     }
     
-    const numbers = invoices.map(inv => {
-      const match = inv.invoiceNumber.match(/(\d+)$/);
-      return match ? parseInt(match[1], 10) : 0;
+    // Extract numbers from invoice numbers
+    const numbers = fyInvoices.map(inv => {
+      const parts = inv.invoiceNumber.split('-');
+      const lastPart = parts[parts.length - 1];
+      return parseInt(lastPart, 10) || 0;
     });
     
     const maxNumber = Math.max(...numbers);
     const nextNumber = maxNumber + 1;
-    return `INV-${String(nextNumber).padStart(3, '0')}`;
+    return `${prefix}${String(nextNumber).padStart(3, '0')}`;
   };
 
   // Customer Actions

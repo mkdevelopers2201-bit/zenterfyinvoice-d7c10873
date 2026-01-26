@@ -4,13 +4,21 @@ import { format } from 'date-fns';
 import { numberToWords } from './numberToWords';
 
 export function generateInvoicePDF(invoice: Invoice): void {
-  const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.getWidth();
+  // A3 paper size: 297 x 420 mm
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a3'
+  });
+  
+  const pageWidth = doc.internal.pageSize.getWidth(); // 297mm for A3
+  const pageHeight = doc.internal.pageSize.getHeight(); // 420mm for A3
   
   // Colors
   const textColor: [number, number, number] = [31, 41, 55];
   const mutedColor: [number, number, number] = [107, 114, 128];
   const borderColor: [number, number, number] = [0, 0, 0];
+  const headerBgColor: [number, number, number] = [240, 240, 240];
 
   const formatNumber = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -34,154 +42,208 @@ export function generateInvoicePDF(invoice: Invoice): void {
     total: invoice.items.reduce((sum, item) => sum + item.total, 0),
   };
 
-  let yPos = 15;
+  const margin = 20;
+  let yPos = 20;
 
   // Company Header
-  doc.setFontSize(8);
+  doc.setFontSize(9);
   doc.setTextColor(...mutedColor);
-  doc.text('GSTIN - 24CMAPK3117Q1ZZ', 20, yPos);
-  doc.text('Mobile - 7990713846', pageWidth - 20, yPos, { align: 'right' });
+  doc.text('GSTIN - 24CMAPK3117Q1ZZ', margin, yPos);
+  doc.text('Mobile - 7990713846', pageWidth - margin, yPos, { align: 'right' });
 
-  yPos += 8;
-  doc.setFontSize(24);
+  yPos += 10;
+  doc.setFontSize(28);
   doc.setTextColor(...textColor);
   doc.text('S. K. ENTERPRISE', pageWidth / 2, yPos, { align: 'center' });
 
-  yPos += 6;
-  doc.setFontSize(7);
+  yPos += 8;
+  doc.setFontSize(9);
   doc.setTextColor(...mutedColor);
   doc.text('TRADING IN MILIGIAN SPARE & PARTS OR BRASS PARTS', pageWidth / 2, yPos, { align: 'center' });
   
-  yPos += 4;
+  yPos += 5;
+  doc.setFontSize(8);
   doc.text('SHOP NO 28, GOLDEN POINT, COMMERCIAL COMPLEX, NEAR SHIVOM CIRCLE, PHASE - III DARED, JAMNAGAR (GUJARAT) - 361 005', pageWidth / 2, yPos, { align: 'center' });
 
   // Line
-  yPos += 5;
+  yPos += 8;
   doc.setDrawColor(...borderColor);
   doc.setLineWidth(0.5);
-  doc.line(15, yPos, pageWidth - 15, yPos);
+  doc.line(margin, yPos, pageWidth - margin, yPos);
 
   // Tax Invoice Title
-  yPos += 8;
-  doc.setFontSize(14);
+  yPos += 10;
+  doc.setFontSize(18);
   doc.setTextColor(...textColor);
   doc.text('Tax - Invoice', pageWidth / 2, yPos, { align: 'center' });
 
-  yPos += 3;
-  doc.line(15, yPos, pageWidth - 15, yPos);
+  yPos += 5;
+  doc.setLineWidth(0.5);
+  doc.line(margin, yPos, pageWidth - margin, yPos);
 
-  // Customer & Invoice Info
-  yPos += 8;
-  doc.setFontSize(9);
+  // Customer & Invoice Info - Two columns
+  yPos += 10;
+  doc.setFontSize(10);
   doc.setTextColor(...textColor);
   
-  doc.text(`M/s - ${invoice.customerName}`, 20, yPos);
-  doc.text(`Invoice Number: ${invoice.invoiceNumber}`, pageWidth - 20, yPos, { align: 'right' });
+  // Left column - Customer details
+  const leftColX = margin;
+  doc.text(`M/s - ${invoice.customerName}`, leftColX, yPos);
   
-  yPos += 5;
-  doc.text(`Address - ${invoice.address || '-'}`, 20, yPos);
-  doc.text(`Invoice Date: ${format(new Date(invoice.date), 'dd/MM/yyyy')}`, pageWidth - 20, yPos, { align: 'right' });
+  // Right column - Invoice details
+  const rightColX = pageWidth - margin;
+  doc.text(`Invoice Number: ${invoice.invoiceNumber}`, rightColX, yPos, { align: 'right' });
   
-  yPos += 5;
-  doc.text(`GSTIN No - ${invoice.gstin || '-'}`, 20, yPos);
-  doc.text(`Order No.: ${invoice.po || '-'}`, pageWidth - 20, yPos, { align: 'right' });
+  yPos += 6;
+  doc.text(`Address - ${invoice.address || '-'}`, leftColX, yPos);
+  doc.text(`Invoice Date: ${format(new Date(invoice.date), 'dd/MM/yyyy')}`, rightColX, yPos, { align: 'right' });
+  
+  yPos += 6;
+  doc.text(`GSTIN No - ${invoice.gstin || '-'}`, leftColX, yPos);
+  doc.text(`Refrence Number: -`, rightColX, yPos, { align: 'right' });
+
+  yPos += 6;
+  doc.text(`Order No.: ${invoice.po || '-'}`, rightColX, yPos, { align: 'right' });
 
   // Items Table
-  yPos += 10;
+  yPos += 12;
   const tableStartY = yPos;
-  const colWidths = [10, 38, 15, 12, 18, 20, 12, 18, 12, 18, 20]; // Total: 193
+  
+  // Column widths for A3 (total width = 257mm)
+  const colWidths = [12, 70, 22, 18, 25, 28, 16, 22, 16, 22, 26];
   const tableWidth = colWidths.reduce((a, b) => a + b, 0);
   const startX = (pageWidth - tableWidth) / 2;
 
-  // Table Header Row 1
-  doc.setFillColor(245, 245, 245);
-  doc.rect(startX, yPos, tableWidth, 10, 'F');
+  // Table Header Row 1 - with background
+  const headerRowHeight = 10;
+  doc.setFillColor(...headerBgColor);
+  doc.rect(startX, yPos, tableWidth, headerRowHeight, 'F');
   doc.setDrawColor(...borderColor);
-  doc.rect(startX, yPos, tableWidth, 10, 'S');
+  doc.setLineWidth(0.3);
+  doc.rect(startX, yPos, tableWidth, headerRowHeight, 'S');
 
-  doc.setFontSize(7);
+  doc.setFontSize(9);
   doc.setTextColor(...textColor);
 
+  // Draw first row headers
   let colX = startX;
-  // Draw column separators and headers
-  const headers1 = ['Sr.', 'Particulars', 'HSN', 'QTY', 'RATE', 'AMOUNT', 'CGST', '', 'SGST', '', 'TOTAL'];
+  const headers1 = ['Sr.', 'Particulars', 'HSN', 'QTY', 'RATE', 'AMOUNT', '', '', '', '', 'TOTAL'];
+  
+  // Draw vertical lines and first row headers
   colWidths.forEach((width, i) => {
     if (i > 0) {
-      doc.line(colX, yPos, colX, yPos + 16);
+      doc.line(colX, yPos, colX, yPos + headerRowHeight * 2);
     }
-    if (i === 6) {
-      doc.text('CGST', colX + width / 2 + 15, yPos + 5, { align: 'center' });
+    if (i === 0) {
+      doc.text('Sr.', colX + width / 2, yPos + 6, { align: 'center' });
+    } else if (i === 1) {
+      doc.text('Particulars', colX + width / 2, yPos + 6, { align: 'center' });
+    } else if (i === 2) {
+      doc.text('HSN', colX + width / 2, yPos + 6, { align: 'center' });
+    } else if (i === 3) {
+      doc.text('QTY', colX + width / 2, yPos + 6, { align: 'center' });
+    } else if (i === 4) {
+      doc.text('RATE', colX + width / 2, yPos + 6, { align: 'center' });
+    } else if (i === 5) {
+      doc.text('AMOUNT', colX + width / 2, yPos + 6, { align: 'center' });
+    } else if (i === 6) {
+      // CGST header spans 2 columns
+      doc.text('CGST', colX + (colWidths[6] + colWidths[7]) / 2, yPos + 6, { align: 'center' });
     } else if (i === 8) {
-      doc.text('SGST', colX + width / 2 + 15, yPos + 5, { align: 'center' });
-    } else if (headers1[i]) {
-      doc.text(headers1[i], colX + width / 2, yPos + 5, { align: 'center' });
+      // SGST header spans 2 columns  
+      doc.text('SGST', colX + (colWidths[8] + colWidths[9]) / 2, yPos + 6, { align: 'center' });
+    } else if (i === 10) {
+      doc.text('TOTAL', colX + width / 2, yPos + 6, { align: 'center' });
     }
     colX += width;
   });
 
-  // Header Row 2
-  yPos += 6;
+  // Header Row 2 - subheaders for CGST and SGST
+  yPos += headerRowHeight;
+  doc.setFillColor(...headerBgColor);
+  doc.rect(startX, yPos, tableWidth, headerRowHeight, 'F');
   doc.line(startX, yPos, startX + tableWidth, yPos);
   
-  colX = startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] + colWidths[5];
-  doc.text('Tax %', colX + colWidths[6] / 2, yPos + 4, { align: 'center' });
-  colX += colWidths[6];
-  doc.text('AMOUNT', colX + colWidths[7] / 2, yPos + 4, { align: 'center' });
-  colX += colWidths[7];
-  doc.text('Tax %', colX + colWidths[8] / 2, yPos + 4, { align: 'center' });
-  colX += colWidths[8];
-  doc.text('AMOUNT', colX + colWidths[9] / 2, yPos + 4, { align: 'center' });
+  // Draw second row of header
+  colX = startX;
+  colWidths.forEach((width, i) => {
+    if (i === 6) {
+      doc.text('Tax %', colX + width / 2, yPos + 6, { align: 'center' });
+    } else if (i === 7) {
+      doc.text('AMOUNT', colX + width / 2, yPos + 6, { align: 'center' });
+    } else if (i === 8) {
+      doc.text('Tax %', colX + width / 2, yPos + 6, { align: 'center' });
+    } else if (i === 9) {
+      doc.text('AMOUNT', colX + width / 2, yPos + 6, { align: 'center' });
+    }
+    colX += width;
+  });
 
-  yPos += 6;
+  yPos += headerRowHeight;
   doc.line(startX, yPos, startX + tableWidth, yPos);
 
   // Table Rows
-  const rowHeight = 8;
+  const rowHeight = 10;
+  doc.setFontSize(9);
+  
   invoice.items.forEach((item, index) => {
-    if (yPos > 240) {
+    if (yPos > pageHeight - 100) {
       doc.addPage();
-      yPos = 20;
+      yPos = 30;
     }
 
-    yPos += rowHeight;
     colX = startX;
+    const rowY = yPos + rowHeight - 3;
     
-    doc.text(String(index + 1), colX + colWidths[0] / 2, yPos - 2, { align: 'center' });
+    // Sr. No
+    doc.text(String(index + 1), colX + colWidths[0] / 2, rowY, { align: 'center' });
     colX += colWidths[0];
     
-    doc.text(item.name.substring(0, 20), colX + 2, yPos - 2);
+    // Particulars
+    const itemName = item.name.length > 35 ? item.name.substring(0, 35) + '...' : item.name;
+    doc.text(itemName, colX + 3, rowY);
     colX += colWidths[1];
     
-    doc.text(item.hsnCode || '-', colX + colWidths[2] / 2, yPos - 2, { align: 'center' });
+    // HSN
+    doc.text(item.hsnCode || '-', colX + colWidths[2] / 2, rowY, { align: 'center' });
     colX += colWidths[2];
     
-    doc.text(String(item.qty), colX + colWidths[3] / 2, yPos - 2, { align: 'center' });
+    // QTY
+    doc.text(String(item.qty), colX + colWidths[3] / 2, rowY, { align: 'center' });
     colX += colWidths[3];
     
-    doc.text(formatNumber(item.rate), colX + colWidths[4] - 2, yPos - 2, { align: 'right' });
+    // Rate
+    doc.text(formatNumber(item.rate), colX + colWidths[4] - 3, rowY, { align: 'right' });
     colX += colWidths[4];
     
-    doc.text(formatNumber(item.amount), colX + colWidths[5] - 2, yPos - 2, { align: 'right' });
+    // Amount
+    doc.text(formatNumber(item.amount), colX + colWidths[5] - 3, rowY, { align: 'right' });
     colX += colWidths[5];
     
-    doc.text(`${item.cgstPercent}%`, colX + colWidths[6] / 2, yPos - 2, { align: 'center' });
+    // CGST %
+    doc.text(`${item.cgstPercent}%`, colX + colWidths[6] / 2, rowY, { align: 'center' });
     colX += colWidths[6];
     
-    doc.text(formatNumber(item.cgstAmount), colX + colWidths[7] - 2, yPos - 2, { align: 'right' });
+    // CGST Amount
+    doc.text(formatNumber(item.cgstAmount), colX + colWidths[7] - 3, rowY, { align: 'right' });
     colX += colWidths[7];
     
-    doc.text(`${item.sgstPercent}%`, colX + colWidths[8] / 2, yPos - 2, { align: 'center' });
+    // SGST %
+    doc.text(`${item.sgstPercent}%`, colX + colWidths[8] / 2, rowY, { align: 'center' });
     colX += colWidths[8];
     
-    doc.text(formatNumber(item.sgstAmount), colX + colWidths[9] - 2, yPos - 2, { align: 'right' });
+    // SGST Amount
+    doc.text(formatNumber(item.sgstAmount), colX + colWidths[9] - 3, rowY, { align: 'right' });
     colX += colWidths[9];
     
-    doc.text(formatNumber(item.total), colX + colWidths[10] - 2, yPos - 2, { align: 'right' });
+    // Total
+    doc.text(formatNumber(item.total), colX + colWidths[10] - 3, rowY, { align: 'right' });
 
+    yPos += rowHeight;
     doc.line(startX, yPos, startX + tableWidth, yPos);
   });
 
-  // Empty rows
+  // Empty rows to fill space
   const minRows = Math.max(5, invoice.items.length);
   for (let i = invoice.items.length; i < minRows; i++) {
     yPos += rowHeight;
@@ -190,102 +252,121 @@ export function generateInvoicePDF(invoice: Invoice): void {
 
   // Grand Total Row
   yPos += rowHeight;
-  doc.setFillColor(245, 245, 245);
+  doc.setFillColor(...headerBgColor);
   doc.rect(startX, yPos - rowHeight, tableWidth, rowHeight, 'F');
   
+  doc.setFontSize(10);
   colX = startX + colWidths[0];
-  doc.setFontSize(8);
-  doc.text('Grand Total', colX + 2, yPos - 2);
+  doc.text('Grand Total', colX + 3, yPos - 3);
   
+  // Amount total
   colX = startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4];
-  doc.text(formatNumber(totals.amount), colX + colWidths[5] - 2, yPos - 2, { align: 'right' });
+  doc.text(formatNumber(totals.amount), colX + colWidths[5] - 3, yPos - 3, { align: 'right' });
+  
+  // CGST total
   colX += colWidths[5] + colWidths[6];
-  doc.text(formatNumber(totals.cgstAmount), colX + colWidths[7] - 2, yPos - 2, { align: 'right' });
+  doc.text(formatNumber(totals.cgstAmount), colX + colWidths[7] - 3, yPos - 3, { align: 'right' });
+  
+  // SGST total
   colX += colWidths[7] + colWidths[8];
-  doc.text(formatNumber(totals.sgstAmount), colX + colWidths[9] - 2, yPos - 2, { align: 'right' });
+  doc.text(formatNumber(totals.sgstAmount), colX + colWidths[9] - 3, yPos - 3, { align: 'right' });
+  
+  // Grand total
   colX += colWidths[9];
-  doc.text(formatNumber(totals.total), colX + colWidths[10] - 2, yPos - 2, { align: 'right' });
+  doc.text(formatNumber(totals.total), colX + colWidths[10] - 3, yPos - 3, { align: 'right' });
 
   doc.line(startX, yPos, startX + tableWidth, yPos);
 
-  // Draw vertical lines for entire table
+  // Draw all vertical lines for entire table
   colX = startX;
-  colWidths.forEach((width, i) => {
-    doc.line(colX, tableStartY, colX, yPos);
+  const tableEndY = yPos;
+  colWidths.forEach((width) => {
+    doc.line(colX, tableStartY, colX, tableEndY);
     colX += width;
   });
-  doc.line(startX + tableWidth, tableStartY, startX + tableWidth, yPos);
+  doc.line(startX + tableWidth, tableStartY, startX + tableWidth, tableEndY);
 
   // Amount in Words Section
-  yPos += 8;
-  doc.setFontSize(8);
-  doc.text('Amount Chargeble (In words)', 20, yPos);
-  yPos += 5;
-  doc.text(`RUPEES - ${numberToWords(totals.total)}`, 20, yPos);
-  
+  yPos += 12;
+  doc.setFontSize(10);
+  doc.setTextColor(...textColor);
+  doc.text('Amount Chargeble (In words)', margin, yPos);
   yPos += 6;
-  doc.text('GST Amount (In words)', 20, yPos);
-  yPos += 5;
-  doc.text(`RUPEES - ${numberToWords(invoice.gstAmount)}`, 20, yPos);
+  doc.setFontSize(9);
+  doc.text(`RUPEES - ${numberToWords(totals.total)}`, margin, yPos);
+  
+  yPos += 10;
+  doc.setFontSize(10);
+  doc.text('GST Amount (In words)', margin, yPos);
+  yPos += 6;
+  doc.setFontSize(9);
+  doc.text(`RUPEES - ${numberToWords(invoice.gstAmount)}`, margin, yPos);
 
   // GST Summary Table (right side)
-  const gstTableX = pageWidth - 75;
-  const gstTableY = yPos - 20;
+  const gstTableX = pageWidth - 90;
+  const gstTableY = yPos - 30;
+  const gstTableWidth = 70;
   
-  doc.setFillColor(245, 245, 245);
-  doc.rect(gstTableX, gstTableY, 55, 8, 'F');
-  doc.rect(gstTableX, gstTableY, 55, 8, 'S');
-  doc.text('GST Amount', gstTableX + 27.5, gstTableY + 5, { align: 'center' });
+  // GST Amount Header
+  doc.setFillColor(...headerBgColor);
+  doc.rect(gstTableX, gstTableY, gstTableWidth, 10, 'F');
+  doc.rect(gstTableX, gstTableY, gstTableWidth, 10, 'S');
+  doc.setFontSize(10);
+  doc.text('GST Amount', gstTableX + gstTableWidth / 2, gstTableY + 7, { align: 'center' });
   
-  doc.rect(gstTableX, gstTableY + 8, 30, 6, 'S');
-  doc.rect(gstTableX + 30, gstTableY + 8, 25, 6, 'S');
-  doc.text('CGST', gstTableX + 3, gstTableY + 12);
-  doc.text(formatCurrency(totals.cgstAmount), gstTableX + 52, gstTableY + 12, { align: 'right' });
+  // CGST Row
+  doc.rect(gstTableX, gstTableY + 10, 35, 8, 'S');
+  doc.rect(gstTableX + 35, gstTableY + 10, 35, 8, 'S');
+  doc.setFontSize(9);
+  doc.text('CGST', gstTableX + 5, gstTableY + 16);
+  doc.text(formatCurrency(totals.cgstAmount), gstTableX + gstTableWidth - 5, gstTableY + 16, { align: 'right' });
   
-  doc.rect(gstTableX, gstTableY + 14, 30, 6, 'S');
-  doc.rect(gstTableX + 30, gstTableY + 14, 25, 6, 'S');
-  doc.text('SGST', gstTableX + 3, gstTableY + 18);
-  doc.text(formatCurrency(totals.sgstAmount), gstTableX + 52, gstTableY + 18, { align: 'right' });
+  // SGST Row
+  doc.rect(gstTableX, gstTableY + 18, 35, 8, 'S');
+  doc.rect(gstTableX + 35, gstTableY + 18, 35, 8, 'S');
+  doc.text('SGST', gstTableX + 5, gstTableY + 24);
+  doc.text(formatCurrency(totals.sgstAmount), gstTableX + gstTableWidth - 5, gstTableY + 24, { align: 'right' });
   
-  doc.setFillColor(245, 245, 245);
-  doc.rect(gstTableX, gstTableY + 20, 30, 6, 'F');
-  doc.rect(gstTableX + 30, gstTableY + 20, 25, 6, 'F');
-  doc.rect(gstTableX, gstTableY + 20, 55, 6, 'S');
-  doc.setFontSize(7);
-  doc.text('TOTAL TAX AMOUNT', gstTableX + 3, gstTableY + 24);
-  doc.text(formatCurrency(invoice.gstAmount), gstTableX + 52, gstTableY + 24, { align: 'right' });
+  // Total Tax Row
+  doc.setFillColor(...headerBgColor);
+  doc.rect(gstTableX, gstTableY + 26, gstTableWidth, 8, 'F');
+  doc.rect(gstTableX, gstTableY + 26, gstTableWidth, 8, 'S');
+  doc.setFontSize(8);
+  doc.text('TOTAL TAX AMOUNT', gstTableX + 5, gstTableY + 32);
+  doc.text(formatCurrency(invoice.gstAmount), gstTableX + gstTableWidth - 5, gstTableY + 32, { align: 'right' });
 
   // Terms & Conditions
-  yPos += 12;
-  doc.setFontSize(8);
-  doc.text('Terms & Conditions', 20, yPos);
-  yPos += 5;
-  doc.setFontSize(7);
+  yPos += 18;
+  doc.setFontSize(10);
+  doc.setTextColor(...textColor);
+  doc.text('Terms & Conditions', margin, yPos);
+  yPos += 6;
+  doc.setFontSize(9);
   doc.setTextColor(...mutedColor);
-  doc.text('1) Goods are dispatched on buyer\'s risk', 20, yPos);
-  yPos += 4;
-  doc.text('2) Interest will be charges @ 12 % if bill is not paid within 7 days.', 20, yPos);
-  yPos += 4;
-  doc.text('3) In case of dispute only JAMNAGAR Court Will have JURISDICTION.', 20, yPos);
+  doc.text("1) Goods are dispatched on buyer's risk", margin, yPos);
+  yPos += 5;
+  doc.text('2) Interest will be charges @ 12 % if bill is not paid within 7 days.', margin, yPos);
+  yPos += 5;
+  doc.text('3) In case of dispute only JAMNAGAR Court Will have JURISDICTION.', margin, yPos);
 
   // Bank Details
-  yPos += 8;
+  yPos += 12;
   doc.setTextColor(...textColor);
-  doc.setFontSize(8);
-  doc.text('Bank Details', 20, yPos);
+  doc.setFontSize(10);
+  doc.text('Bank Details', margin, yPos);
+  yPos += 6;
+  doc.setFontSize(9);
+  doc.text('Kotak Bank A/c. Number :- 4711625484', margin, yPos);
   yPos += 5;
-  doc.setFontSize(7);
-  doc.text('Kotak Bank A/c. Number :- 4711625484', 20, yPos);
-  yPos += 4;
-  doc.text('IFSC Code :- KKBK0002936', 20, yPos);
+  doc.text('IFSC Code :- KKBK0002936', margin, yPos);
 
   // Signature
-  doc.setFontSize(9);
+  doc.setFontSize(11);
   doc.setTextColor(...textColor);
-  doc.text('For S. K. Enterprise', pageWidth - 20, yPos - 15, { align: 'right' });
-  doc.setFontSize(8);
+  doc.text('For S. K. Enterprise', pageWidth - margin, yPos - 20, { align: 'right' });
+  doc.setFontSize(9);
   doc.setTextColor(...mutedColor);
-  doc.text('Authorised Singture', pageWidth - 20, yPos + 5, { align: 'right' });
+  doc.text('Authorised Singture', pageWidth - margin, yPos + 10, { align: 'right' });
 
   // Save
   doc.save(`${invoice.invoiceNumber}.pdf`);
