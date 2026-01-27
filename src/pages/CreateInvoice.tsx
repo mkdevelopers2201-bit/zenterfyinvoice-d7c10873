@@ -422,10 +422,17 @@ export default function CreateInvoice() {
                       <Label>QTY</Label>
                       <Input
                         type="number"
-                        value={item.qty === 1 ? '' : item.qty}
-                        onChange={(e) => updateInvoiceItem(item.id, 'qty', parseInt(e.target.value) || 1)}
+                        value={item.qty}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '' || val === '0') {
+                            updateInvoiceItem(item.id, 'qty', 1);
+                          } else {
+                            updateInvoiceItem(item.id, 'qty', parseInt(val) || 1);
+                          }
+                        }}
                         min={1}
-                        placeholder=""
+                        placeholder="1"
                         className="mt-1"
                       />
                     </div>
