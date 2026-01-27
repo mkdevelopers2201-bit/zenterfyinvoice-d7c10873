@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '@/context/DataContext';
 import { Invoice } from '@/types/invoice';
@@ -37,12 +37,29 @@ import {
   Trash2, 
   Download, 
   FileText,
-  Plus
+  Plus,
+  X
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, getYear, getMonth } from 'date-fns';
 import { InvoicePreview } from '@/components/InvoicePreview';
 import { generateInvoicePDF } from '@/utils/pdfGenerator';
 import { toast } from 'sonner';
+import { MultiSelect, MultiSelectOption } from '@/components/ui/multi-select';
+
+const MONTH_OPTIONS: MultiSelectOption[] = [
+  { value: '0', label: 'January' },
+  { value: '1', label: 'February' },
+  { value: '2', label: 'March' },
+  { value: '3', label: 'April' },
+  { value: '4', label: 'May' },
+  { value: '5', label: 'June' },
+  { value: '6', label: 'July' },
+  { value: '7', label: 'August' },
+  { value: '8', label: 'September' },
+  { value: '9', label: 'October' },
+  { value: '10', label: 'November' },
+  { value: '11', label: 'December' },
+];
 
 export default function SalesRegister() {
   const navigate = useNavigate();
@@ -51,11 +68,57 @@ export default function SalesRegister() {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [invoiceToDelete, setInvoiceToDelete] = useState<string | null>(null);
+  const [selectedYears, setSelectedYears] = useState<string[]>([]);
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
 
-  const filteredInvoices = invoices.filter(inv => 
-    inv.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    inv.customerName.toLowerCase().includes(searchTerm.toLowerCase())
-  ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  // Extract unique years from invoices
+  const yearOptions: MultiSelectOption[] = useMemo(() => {
+    const years = new Set<number>();
+    invoices.forEach(inv => {
+      const year = getYear(new Date(inv.date));
+      years.add(year);
+    });
+    return Array.from(years)
+      .sort((a, b) => b - a)
+      .map(year => ({ value: String(year), label: String(year) }));
+  }, [invoices]);
+
+  // Filter invoices based on search, years, and months
+  const filteredInvoices = useMemo(() => {
+    return invoices
+      .filter(inv => {
+        // Text search filter
+        const matchesSearch = 
+          inv.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          inv.customerName.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        if (!matchesSearch) return false;
+
+        const invoiceDate = new Date(inv.date);
+        const invoiceYear = getYear(invoiceDate);
+        const invoiceMonth = getMonth(invoiceDate);
+
+        // Year filter
+        if (selectedYears.length > 0 && !selectedYears.includes(String(invoiceYear))) {
+          return false;
+        }
+
+        // Month filter
+        if (selectedMonths.length > 0 && !selectedMonths.includes(String(invoiceMonth))) {
+          return false;
+        }
+
+        return true;
+      })
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [invoices, searchTerm, selectedYears, selectedMonths]);
+
+  const hasActiveFilters = selectedYears.length > 0 || selectedMonths.length > 0;
+
+  const clearFilters = () => {
+    setSelectedYears([]);
+    setSelectedMonths([]);
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -92,6 +155,43 @@ export default function SalesRegister() {
         </Button>
       </div>
 
+      {/* Filters Section */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-muted-foreground">Year:</span>
+              <MultiSelect
+                options={yearOptions}
+                selected={selectedYears}
+                onChange={setSelectedYears}
+                placeholder="All Years"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-muted-foreground">Month:</span>
+              <MultiSelect
+                options={MONTH_OPTIONS}
+                selected={selectedMonths}
+                onChange={setSelectedMonths}
+                placeholder="All Months"
+              />
+            </div>
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
+                className="gap-1 text-muted-foreground hover:text-foreground"
+              >
+                <X size={16} />
+                Clear Filters
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -115,9 +215,11 @@ export default function SalesRegister() {
             <div className="text-center py-12">
               <FileText className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
               <p className="text-muted-foreground">
-                {searchTerm ? 'No invoices found matching your search' : 'No invoices yet. Create your first invoice!'}
+                {searchTerm || hasActiveFilters 
+                  ? 'No invoices found matching your filters' 
+                  : 'No invoices yet. Create your first invoice!'}
               </p>
-              {!searchTerm && (
+              {!searchTerm && !hasActiveFilters && (
                 <Button onClick={() => navigate('/create-invoice')} className="mt-4">
                   Create Invoice
                 </Button>
