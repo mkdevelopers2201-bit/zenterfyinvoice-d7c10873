@@ -304,7 +304,11 @@ export function generateInvoicePDF(invoice: Invoice): void {
     }
     
     @media print {
-      body {
+      html, body {
+        height: auto !important;
+        min-height: unset !important;
+        margin: 0 !important;
+        padding: 0 !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
@@ -313,6 +317,7 @@ export function generateInvoicePDF(invoice: Invoice): void {
         padding: 0;
         max-width: none;
         min-height: unset !important;
+        height: auto !important;
       }
     }
   </style>
