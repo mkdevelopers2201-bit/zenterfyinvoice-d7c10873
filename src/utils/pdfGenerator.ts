@@ -71,7 +71,7 @@ export function generateInvoicePDF(invoice: Invoice): void {
   <style>
     @page {
       size: A3 portrait;
-      margin: 8mm;
+      margin: 8mm 8mm 0mm 8mm;
     }
     
     * {
@@ -311,6 +311,7 @@ export function generateInvoicePDF(invoice: Invoice): void {
         padding: 0 !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
+        overflow: visible !important;
       }
       
       .invoice-container {
@@ -318,6 +319,7 @@ export function generateInvoicePDF(invoice: Invoice): void {
         max-width: none;
         min-height: unset !important;
         height: auto !important;
+        overflow: visible !important;
       }
     }
   </style>
@@ -458,22 +460,63 @@ export function generateInvoicePDF(invoice: Invoice): void {
       </div>
     </div>
   </div>
-
-  <script>
-    window.onload = function() {
-      setTimeout(function() {
-        window.print();
-      }, 250);
-    };
-  </script>
 </body>
 </html>
 `;
 
-  // Open a new window and write the HTML content
-  const printWindow = window.open('', '_blank', 'width=1200,height=800');
-  if (printWindow) {
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
+  // Prefer popup (supports native print-to-PDF), fallback to hidden iframe (avoids popup blockers)
+  try {
+    const printWindow = window.open('', '_blank', 'width=1200,height=800');
+    if (printWindow) {
+      printWindow.document.open();
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.onafterprint = () => {
+        try {
+          printWindow.close();
+        } catch {
+          // ignore
+        }
+      };
+      printWindow.print();
+      return;
+    }
+  } catch {
+    // ignore and fallback
   }
+
+  const iframe = document.createElement('iframe');
+  iframe.setAttribute('aria-hidden', 'true');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  iframe.style.opacity = '0';
+  iframe.style.pointerEvents = 'none';
+  iframe.srcdoc = htmlContent;
+
+  document.body.appendChild(iframe);
+
+  const cleanup = () => {
+    try {
+      iframe.remove();
+    } catch {
+      // ignore
+    }
+  };
+
+  iframe.onload = () => {
+    const win = iframe.contentWindow;
+    if (!win) {
+      cleanup();
+      throw new Error('Print failed');
+    }
+
+    win.onafterprint = cleanup;
+    win.focus();
+    win.print();
+  };
 }
