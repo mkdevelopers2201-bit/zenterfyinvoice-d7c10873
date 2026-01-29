@@ -11,12 +11,14 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
+      minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
   };
 
   const formatNumber = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
+      minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
   };
@@ -141,7 +143,7 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
         <div className="space-y-2">
           <div>
             <p className="font-semibold">Amount Chargeble (In words)</p>
-            <p className="font-medium">RUPEES - {numberToWords(totals.total)}</p>
+            <p className="font-medium">RUPEES - {numberToWords(invoice.grandTotal)}</p>
           </div>
           <div>
             <p className="font-semibold">GST Amount (In words)</p>
@@ -152,7 +154,7 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
           <table className="w-full border border-foreground">
             <thead>
               <tr className="bg-muted/30">
-                <th colSpan={2} className="py-1 px-2 text-center border-b border-foreground font-semibold">GST Amount</th>
+                <th colSpan={2} className="py-1 px-2 text-center border-b border-foreground font-semibold">Summary</th>
               </tr>
             </thead>
             <tbody>
@@ -164,9 +166,19 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
                 <td className="py-1 px-2 border-r border-foreground">SGST</td>
                 <td className="py-1 px-2 text-right">{formatCurrency(totals.sgstAmount)}</td>
               </tr>
-              <tr className="font-bold bg-muted/30">
-                <td className="py-1 px-2 border-r border-foreground">TOTAL TAX AMOUNT</td>
+              <tr className="border-b border-foreground">
+                <td className="py-1 px-2 border-r border-foreground">Total Tax</td>
                 <td className="py-1 px-2 text-right">{formatCurrency(invoice.gstAmount)}</td>
+              </tr>
+              {(invoice.roundOff !== undefined && invoice.roundOff !== 0) && (
+                <tr className="border-b border-foreground">
+                  <td className="py-1 px-2 border-r border-foreground">Round Off</td>
+                  <td className="py-1 px-2 text-right">{invoice.roundOff > 0 ? '+' : ''}{formatNumber(invoice.roundOff)}</td>
+                </tr>
+              )}
+              <tr className="font-bold bg-muted/30">
+                <td className="py-1 px-2 border-r border-foreground">GRAND TOTAL</td>
+                <td className="py-1 px-2 text-right">{formatCurrency(invoice.grandTotal)}</td>
               </tr>
             </tbody>
           </table>

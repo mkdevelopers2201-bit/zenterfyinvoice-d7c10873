@@ -43,6 +43,7 @@ export interface Invoice {
   cgstTotal: number;
   sgstTotal: number;
   gstAmount: number; // cgst + sgst
+  roundOff?: number; // difference to make grandTotal a whole number
   grandTotal: number;
   status: 'paid' | 'pending';
   createdAt: string;
