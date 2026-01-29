@@ -56,6 +56,7 @@ export type Database = {
           invoiceNumber: string
           items: Json | null
           po: string | null
+          roundOff: number | null
           sgstTotal: number | null
           status: string | null
           user_id: string | null
@@ -75,6 +76,7 @@ export type Database = {
           invoiceNumber: string
           items?: Json | null
           po?: string | null
+          roundOff?: number | null
           sgstTotal?: number | null
           status?: string | null
           user_id?: string | null
@@ -94,6 +96,7 @@ export type Database = {
           invoiceNumber?: string
           items?: Json | null
           po?: string | null
+          roundOff?: number | null
           sgstTotal?: number | null
           status?: string | null
           user_id?: string | null
