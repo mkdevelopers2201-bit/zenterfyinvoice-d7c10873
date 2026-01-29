@@ -53,6 +53,8 @@ export default function CreateInvoice() {
   const [po, setPo] = useState('');
   const [status, setStatus] = useState<'paid' | 'pending'>('pending');
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([createEmptyItem()]);
+  const [roundOff, setRoundOff] = useState<number>(0);
+  const [isRoundOffManual, setIsRoundOffManual] = useState(false);
 
   const [showCustomerSuggestions, setShowCustomerSuggestions] = useState(false);
   const [customerSuggestions, setCustomerSuggestions] = useState(customers);
@@ -69,6 +71,10 @@ export default function CreateInvoice() {
         setPo(invoice.po);
         setStatus(invoice.status);
         setInvoiceItems(invoice.items);
+        if (invoice.roundOff !== undefined && invoice.roundOff !== 0) {
+          setRoundOff(invoice.roundOff);
+          setIsRoundOffManual(true);
+        }
       }
     } else {
       setInvoiceNumber(getNextInvoiceNumber());
@@ -156,14 +162,25 @@ export default function CreateInvoice() {
     const cgstTotal = invoiceItems.reduce((sum, item) => sum + item.cgstAmount, 0);
     const sgstTotal = invoiceItems.reduce((sum, item) => sum + item.sgstAmount, 0);
     const gstAmount = cgstTotal + sgstTotal;
-    const grandTotal = invoiceItems.reduce((sum, item) => sum + item.total, 0);
-    return { withoutGst, cgstTotal, sgstTotal, gstAmount, grandTotal };
+    const subtotal = invoiceItems.reduce((sum, item) => sum + item.total, 0);
+    return { withoutGst, cgstTotal, sgstTotal, gstAmount, subtotal };
   }, [invoiceItems]);
+
+  // Auto-calculate round-off when subtotal changes (unless manual override)
+  useEffect(() => {
+    if (!isRoundOffManual) {
+      const diff = Math.round(calculations.subtotal) - calculations.subtotal;
+      setRoundOff(Math.round(diff * 100) / 100); // Round to 2 decimals
+    }
+  }, [calculations.subtotal, isRoundOffManual]);
+
+  const finalGrandTotal = calculations.subtotal + roundOff;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
+      minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
   };
@@ -216,7 +233,8 @@ export default function CreateInvoice() {
         cgstTotal: calculations.cgstTotal,
         sgstTotal: calculations.sgstTotal,
         gstAmount: calculations.gstAmount,
-        grandTotal: calculations.grandTotal,
+        roundOff: roundOff,
+        grandTotal: finalGrandTotal,
         status,
         updatedAt: new Date().toISOString(),
       };
@@ -520,11 +538,40 @@ export default function CreateInvoice() {
                   <span className="text-muted-foreground">Total Tax Amount</span>
                   <span className="font-medium">{formatCurrency(calculations.gstAmount)}</span>
                 </div>
+                <div className="flex justify-between items-center text-sm pt-2">
+                  <span className="text-muted-foreground">Round Off</span>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={roundOff}
+                      onChange={(e) => {
+                        setIsRoundOffManual(true);
+                        setRoundOff(parseFloat(e.target.value) || 0);
+                      }}
+                      className="w-24 h-8 text-right text-sm"
+                    />
+                    {isRoundOffManual && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-8 px-2 text-xs"
+                        onClick={() => {
+                          setIsRoundOffManual(false);
+                          const diff = Math.round(calculations.subtotal) - calculations.subtotal;
+                          setRoundOff(Math.round(diff * 100) / 100);
+                        }}
+                      >
+                        Auto
+                      </Button>
+                    )}
+                  </div>
+                </div>
                 <div className="border-t pt-3">
                   <div className="flex justify-between">
                     <span className="font-semibold text-lg">Grand Total</span>
                     <span className="font-bold text-xl text-primary">
-                      {formatCurrency(calculations.grandTotal)}
+                      {formatCurrency(finalGrandTotal)}
                     </span>
                   </div>
                 </div>

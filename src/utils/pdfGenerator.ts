@@ -4,8 +4,8 @@ import { numberToWords } from './numberToWords';
 
 const formatNumber = (amount: number) => {
   return new Intl.NumberFormat('en-IN', {
-    maximumFractionDigits: 2,
     minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(amount);
 };
 
@@ -13,6 +13,7 @@ const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
 };
@@ -136,13 +137,15 @@ export function generateInvoicePDF(invoice: Invoice): void {
 
     <div class="summary-section">
       <div>
-        <p style="margin-bottom: 8px;"><strong>Amount Chargable in Words:</strong><br/>RUPEES - ${numberToWords(totals.total).toUpperCase()} ONLY</p>
-        <p><strong>Amount Taxable in Words:</strong><br/>RUPEES - ${numberToWords(invoice.gstAmount).toUpperCase()} ONLY</p>
+        <p style="margin-bottom: 8px;"><strong>Amount Chargable in Words:</strong><br/>RUPEES - ${numberToWords(invoice.grandTotal).toUpperCase()}</p>
+        <p><strong>Amount Taxable in Words:</strong><br/>RUPEES - ${numberToWords(invoice.gstAmount).toUpperCase()}</p>
       </div>
       <table class="gst-summary-table">
         <tr><td>CGST</td><td class="text-right">${formatCurrency(totals.cgstAmount)}</td></tr>
         <tr><td>SGST</td><td class="text-right">${formatCurrency(totals.sgstAmount)}</td></tr>
-        <tr style="background:#f2f2f2"><td><strong>TOTAL TAX AMOUNT</strong></td><td class="text-right"><strong>${formatCurrency(invoice.gstAmount)}</strong></td></tr>
+        <tr><td>Total Tax</td><td class="text-right">${formatCurrency(invoice.gstAmount)}</td></tr>
+        ${(invoice.roundOff !== undefined && invoice.roundOff !== 0) ? `<tr><td>Round Off</td><td class="text-right">${invoice.roundOff > 0 ? '+' : ''}${formatNumber(invoice.roundOff)}</td></tr>` : ''}
+        <tr style="background:#f2f2f2"><td><strong>GRAND TOTAL</strong></td><td class="text-right"><strong>${formatCurrency(invoice.grandTotal)}</strong></td></tr>
       </table>
     </div>
 
