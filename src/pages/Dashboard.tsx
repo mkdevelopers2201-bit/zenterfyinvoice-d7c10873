@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useData } from '@/context/DataContext';
 import { StatCard } from '@/components/ui/stat-card';
-import { FileText, Users, Package, IndianRupee, Clock, CheckCircle, Eye } from 'lucide-react';
+import { FileText, Users, Package, IndianRupee, Clock, CheckCircle, Eye, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
+import { format, getYear, getMonth } from 'date-fns';
 import {
   Dialog,
   DialogContent,
@@ -15,17 +15,68 @@ import {
 } from '@/components/ui/dialog';
 import { InvoicePreview } from '@/components/InvoicePreview';
 import { Invoice } from '@/types/invoice';
+import { MultiSelect, MultiSelectOption } from '@/components/ui/multi-select';
+
+const MONTH_OPTIONS: MultiSelectOption[] = [
+  { value: '0', label: 'January' },
+  { value: '1', label: 'February' },
+  { value: '2', label: 'March' },
+  { value: '3', label: 'April' },
+  { value: '4', label: 'May' },
+  { value: '5', label: 'June' },
+  { value: '6', label: 'July' },
+  { value: '7', label: 'August' },
+  { value: '8', label: 'September' },
+  { value: '9', label: 'October' },
+  { value: '10', label: 'November' },
+  { value: '11', label: 'December' },
+];
 
 export default function Dashboard() {
   const { invoices, customers, items } = useData();
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [selectedYears, setSelectedYears] = useState<string[]>([]);
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
 
-  const totalRevenue = invoices.reduce((sum, inv) => sum + inv.grandTotal, 0);
-  const paidInvoices = invoices.filter(inv => inv.status === 'paid');
-  const pendingInvoices = invoices.filter(inv => inv.status === 'pending');
+  // Fixed year options from 2023 to 2025
+  const yearOptions: MultiSelectOption[] = useMemo(() => {
+    return [2025, 2024, 2023].map(year => ({ value: String(year), label: String(year) }));
+  }, []);
+
+  // Filter invoices based on selected years and months
+  const filteredInvoices = useMemo(() => {
+    return invoices.filter(inv => {
+      const invoiceDate = new Date(inv.date);
+      const invoiceYear = getYear(invoiceDate);
+      const invoiceMonth = getMonth(invoiceDate);
+
+      // Year filter
+      if (selectedYears.length > 0 && !selectedYears.includes(String(invoiceYear))) {
+        return false;
+      }
+
+      // Month filter
+      if (selectedMonths.length > 0 && !selectedMonths.includes(String(invoiceMonth))) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [invoices, selectedYears, selectedMonths]);
+
+  const hasActiveFilters = selectedYears.length > 0 || selectedMonths.length > 0;
+
+  const clearFilters = () => {
+    setSelectedYears([]);
+    setSelectedMonths([]);
+  };
+
+  const totalRevenue = filteredInvoices.reduce((sum, inv) => sum + inv.grandTotal, 0);
+  const paidInvoices = filteredInvoices.filter(inv => inv.status === 'paid');
+  const pendingInvoices = filteredInvoices.filter(inv => inv.status === 'pending');
   const pendingAmount = pendingInvoices.reduce((sum, inv) => sum + inv.grandTotal, 0);
 
-  const recentInvoices = [...invoices]
+  const recentInvoices = [...filteredInvoices]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 5);
 
@@ -39,17 +90,48 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
           <p className="text-muted-foreground mt-1">Welcome back! Here's your business overview.</p>
         </div>
-        <Link to="/create-invoice">
-          <Button size="lg" className="gap-2">
-            <FileText size={20} />
-            Create Invoice
-          </Button>
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-muted-foreground">Year:</span>
+            <MultiSelect
+              options={yearOptions}
+              selected={selectedYears}
+              onChange={setSelectedYears}
+              placeholder="All Years"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-muted-foreground">Month:</span>
+            <MultiSelect
+              options={MONTH_OPTIONS}
+              selected={selectedMonths}
+              onChange={setSelectedMonths}
+              placeholder="All Months"
+            />
+          </div>
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearFilters}
+              className="gap-1 text-muted-foreground hover:text-foreground"
+            >
+              <X size={16} />
+              Clear
+            </Button>
+          )}
+          <Link to="/create-invoice">
+            <Button size="lg" className="gap-2">
+              <FileText size={20} />
+              Create Invoice
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

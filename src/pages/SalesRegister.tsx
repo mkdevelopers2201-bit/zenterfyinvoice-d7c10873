@@ -71,17 +71,10 @@ export default function SalesRegister() {
   const [selectedYears, setSelectedYears] = useState<string[]>([]);
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
 
-  // Extract unique years from invoices
+  // Fixed year options from 2023 to 2025
   const yearOptions: MultiSelectOption[] = useMemo(() => {
-    const years = new Set<number>();
-    invoices.forEach(inv => {
-      const year = getYear(new Date(inv.date));
-      years.add(year);
-    });
-    return Array.from(years)
-      .sort((a, b) => b - a)
-      .map(year => ({ value: String(year), label: String(year) }));
-  }, [invoices]);
+    return [2025, 2024, 2023].map(year => ({ value: String(year), label: String(year) }));
+  }, []);
 
   // Filter invoices based on search, years, and months
   const filteredInvoices = useMemo(() => {
