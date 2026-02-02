@@ -14,6 +14,80 @@ export type Database = {
   }
   public: {
     Tables: {
+      bills: {
+        Row: {
+          bill_number: string
+          cgst_total: number
+          challan_ids: string[]
+          created_at: string
+          customer_address: string | null
+          customer_gstin: string | null
+          customer_id: string | null
+          customer_name: string
+          date: string
+          gst_amount: number
+          id: string
+          items: Json
+          net_amount: number
+          round_off: number
+          sgst_total: number
+          status: string
+          subtotal: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bill_number: string
+          cgst_total?: number
+          challan_ids?: string[]
+          created_at?: string
+          customer_address?: string | null
+          customer_gstin?: string | null
+          customer_id?: string | null
+          customer_name: string
+          date?: string
+          gst_amount?: number
+          id?: string
+          items?: Json
+          net_amount?: number
+          round_off?: number
+          sgst_total?: number
+          status?: string
+          subtotal?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bill_number?: string
+          cgst_total?: number
+          challan_ids?: string[]
+          created_at?: string
+          customer_address?: string | null
+          customer_gstin?: string | null
+          customer_id?: string | null
+          customer_name?: string
+          date?: string
+          gst_amount?: number
+          id?: string
+          items?: Json
+          net_amount?: number
+          round_off?: number
+          sgst_total?: number
+          status?: string
+          subtotal?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bills_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           address: string | null
@@ -21,6 +95,7 @@ export type Database = {
           gstin: string | null
           id: string
           name: string
+          phone: string | null
           user_id: string | null
         }
         Insert: {
@@ -29,6 +104,7 @@ export type Database = {
           gstin?: string | null
           id?: string
           name: string
+          phone?: string | null
           user_id?: string | null
         }
         Update: {
@@ -37,9 +113,82 @@ export type Database = {
           gstin?: string | null
           id?: string
           name?: string
+          phone?: string | null
           user_id?: string | null
         }
         Relationships: []
+      }
+      delivery_challans: {
+        Row: {
+          bill_id: string | null
+          challan_number: string
+          created_at: string
+          current_amount: number
+          customer_address: string | null
+          customer_id: string | null
+          customer_name: string
+          customer_phone: string | null
+          date: string
+          grand_total: number
+          id: string
+          is_billed: boolean
+          items: Json
+          previous_balance: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bill_id?: string | null
+          challan_number: string
+          created_at?: string
+          current_amount?: number
+          customer_address?: string | null
+          customer_id?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          date?: string
+          grand_total?: number
+          id?: string
+          is_billed?: boolean
+          items?: Json
+          previous_balance?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bill_id?: string | null
+          challan_number?: string
+          created_at?: string
+          current_amount?: number
+          customer_address?: string | null
+          customer_id?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          date?: string
+          grand_total?: number
+          id?: string
+          is_billed?: boolean
+          items?: Json
+          previous_balance?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_challans_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "bills"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_challans_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invoices: {
         Row: {

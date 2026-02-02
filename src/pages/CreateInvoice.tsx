@@ -77,9 +77,16 @@ export default function CreateInvoice() {
         }
       }
     } else {
-      setInvoiceNumber(getNextInvoiceNumber());
+      setInvoiceNumber(getNextInvoiceNumber(new Date(date)));
     }
-  }, [editId, invoices, getNextInvoiceNumber]);
+  }, [editId, invoices]);
+
+  // Update invoice number when date changes (only for new invoices)
+  useEffect(() => {
+    if (!editId && date) {
+      setInvoiceNumber(getNextInvoiceNumber(new Date(date)));
+    }
+  }, [date, editId, getNextInvoiceNumber]);
 
   const handleCustomerSearch = (value: string) => {
     setCustomerName(value);

@@ -46,6 +46,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     { to: '/', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
     { to: '/create-invoice', icon: <FileText size={20} />, label: 'Create Invoice' },
     { to: '/sales-register', icon: <ListOrdered size={20} />, label: 'Sales Register' },
+    { to: '/delivery-challans', icon: <Receipt size={20} />, label: 'Delivery Challans' },
     { to: '/customers', icon: <Users size={20} />, label: 'Customers' },
     { to: '/items', icon: <Package size={20} />, label: 'Items' },
   ];
@@ -56,7 +57,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <div className="lg:hidden flex items-center justify-between p-4 border-b bg-card">
         <div className="flex items-center gap-2">
           <Receipt className="h-8 w-8 text-primary" />
-          <span className="text-xl font-bold text-foreground">InvoicePro</span>
+          <span className="text-xl font-bold text-foreground">Invoice Pro</span>
         </div>
         <div className="flex items-center gap-2">
           <UserMenu />
@@ -87,7 +88,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-2">
               <Receipt className="h-8 w-8 text-primary" />
-              <span className="text-xl font-bold text-foreground">InvoicePro</span>
+              <span className="text-xl font-bold text-foreground">Invoice Pro</span>
             </div>
             <div className="hidden lg:block">
               <UserMenu />
