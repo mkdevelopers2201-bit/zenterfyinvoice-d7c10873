@@ -22,7 +22,7 @@ interface DataContextType {
   getInvoiceById: (id: string) => Invoice | undefined;
   getCustomerByName: (name: string) => Customer | undefined;
   getItemByName: (name: string) => Item | undefined;
-  getNextInvoiceNumber: () => string;
+  getNextInvoiceNumber: (date?: Date) => string;
   isLoading: boolean;
   refreshData: () => Promise<void>;
 }
@@ -30,10 +30,9 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 // Helper function to get financial year string (e.g., "2025-26")
-const getFinancialYear = (): string => {
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth(); // 0-11
+const getFinancialYear = (date: Date = new Date()): string => {
+  const currentYear = date.getFullYear();
+  const currentMonth = date.getMonth(); // 0-11
   
   // Financial year starts in April (month 3)
   if (currentMonth >= 3) {
@@ -127,8 +126,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Generate next invoice number based on existing invoices
   // Format: YYYY-YY-XXX (e.g., 2025-26-001)
-  const getNextInvoiceNumber = () => {
-    const financialYear = getFinancialYear();
+  const getNextInvoiceNumber = (date: Date = new Date()) => {
+    const financialYear = getFinancialYear(date);
     const prefix = `${financialYear}-`;
     
     // Filter invoices that match current financial year

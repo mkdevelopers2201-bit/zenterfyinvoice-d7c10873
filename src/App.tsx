@@ -11,6 +11,7 @@ import CreateInvoice from "./pages/CreateInvoice";
 import SalesRegister from "./pages/SalesRegister";
 import Customers from "./pages/Customers";
 import Items from "./pages/Items";
+import DeliveryChallans from "./pages/DeliveryChallans";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
@@ -92,6 +93,13 @@ const AppRoutes = () => (
       <ProtectedRoute>
         <AppLayout>
           <Items />
+        </AppLayout>
+      </ProtectedRoute>
+    } />
+    <Route path="/delivery-challans" element={
+      <ProtectedRoute>
+        <AppLayout>
+          <DeliveryChallans />
         </AppLayout>
       </ProtectedRoute>
     } />
