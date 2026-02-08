@@ -9,21 +9,17 @@ interface InvoicePreviewProps {
 export function InvoicePreview({ invoice }: InvoicePreviewProps) {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      style: 'currency', currency: 'INR',
+      minimumFractionDigits: 2, maximumFractionDigits: 2,
     }).format(amount);
   };
 
   const formatNumber = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      minimumFractionDigits: 2, maximumFractionDigits: 2,
     }).format(amount);
   };
 
-  // Calculate column totals
   const totals = {
     amount: invoice.items.reduce((sum, item) => sum + item.amount, 0),
     cgstAmount: invoice.items.reduce((sum, item) => sum + item.cgstAmount, 0),
@@ -32,37 +28,53 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
   };
 
   return (
-    <div className="bg-card p-6 rounded-lg shadow-sm border text-sm" id="invoice-preview">
+    <div className="bg-card p-6 rounded-lg shadow-sm border text-sm font-sans" id="invoice-preview">
       {/* Company Header */}
-      <div className="border-b-2 border-foreground pb-4 mb-4">
-        <div className="flex justify-between text-xs text-muted-foreground mb-2">
-          <span>GSTIN - 24CMAPK3117Q1ZZ</span>
-          <span>Mobile - 7990713846</span>
+      <div className="border-b-2 border-foreground pb-3 mb-4">
+        <div className="flex justify-between text-xs text-muted-foreground mb-1">
+          <span>GSTIN NO - 24CMAPK3117Q1ZZ</span>
+          <span>79907 13846 94283 19484</span>
         </div>
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-wide">S. K. ENTERPRISE</h1>
-          <p className="text-xs text-muted-foreground mt-1">TRADING IN MILIGIAN SPARE & PARTS OR BRASS PARTS</p>
-          <p className="text-xs text-muted-foreground">SHOP NO 28, GOLDEN POINT, COMMERCIAL COMPLEX, NEAR SHIVOM CIRCLE, PHASE - III DARED, JAMNAGAR (GUJARAT) - 361 005</p>
+          <h1 className="text-3xl font-bold tracking-wide">SK ENTERPRISE</h1>
+          <p className="text-xs text-muted-foreground mt-1">SHOP NO 28. SHIV OM CIRCLE, GOLDEN POINT, DARED, PHASE III, JAMNAGAR</p>
         </div>
       </div>
 
       {/* Tax Invoice Title */}
-      <div className="text-center border-y-2 border-foreground py-2 mb-4">
-        <h2 className="text-xl font-bold">Tax - Invoice</h2>
+      <div className="text-center border border-foreground py-2 mb-4">
+        <h2 className="text-lg font-bold">TAX INVOICE</h2>
       </div>
 
       {/* Customer & Invoice Info */}
-      <div className="grid grid-cols-2 gap-4 mb-4 text-xs">
+      <div className="grid grid-cols-2 gap-6 mb-4 text-xs">
         <div className="space-y-1">
-          <p><span className="font-semibold">M/s -</span> {invoice.customerName}</p>
-          <p><span className="font-semibold">Address -</span> {invoice.address || '-'}</p>
-          <p><span className="font-semibold">GSTIN No -</span> {invoice.gstin || '-'}</p>
+          <div className="flex gap-2">
+            <span className="font-medium w-16">BILLED</span>
+            <span className="flex-1 border-b border-foreground/30 pb-1">{invoice.customerName}</span>
+          </div>
+          <div className="flex gap-2">
+            <span className="font-medium w-16">ADDRESS</span>
+            <span className="flex-1 border-b border-foreground/30 pb-1">{invoice.address || '-'}</span>
+          </div>
+          <div className="flex gap-2">
+            <span className="font-medium w-16">GSTIN</span>
+            <span className="flex-1 border-b border-foreground/30 pb-1">{invoice.gstin || '-'}</span>
+          </div>
         </div>
         <div className="space-y-1 text-right">
-          <p><span className="font-semibold">Invoice Number:</span> {invoice.invoiceNumber}</p>
-          <p><span className="font-semibold">Invoice Date:</span> {format(new Date(invoice.date), 'dd/MM/yyyy')}</p>
-          <p><span className="font-semibold">Refrence Number:</span> -</p>
-          <p><span className="font-semibold">Order No.:</span> {invoice.po || '-'}</p>
+          <div className="flex gap-2 justify-end">
+            <span className="flex-1 border-b border-foreground/30 pb-1 text-left">{invoice.invoiceNumber}</span>
+            <span className="font-medium">INVOICE NUMBER</span>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <span className="flex-1 border-b border-foreground/30 pb-1 text-left">{format(new Date(invoice.date), 'dd/MM/yyyy')}</span>
+            <span className="font-medium">DATED</span>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <span className="flex-1 border-b border-foreground/30 pb-1 text-left">{invoice.po || '-'}</span>
+            <span className="font-medium">ORDER NUMBER</span>
+          </div>
         </div>
       </div>
 
@@ -70,48 +82,29 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
       <div className="border border-foreground mb-4">
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-foreground bg-muted/30">
-              <th className="border-r border-foreground py-2 px-1 text-center w-8" rowSpan={2}>Sr.<br/>No.</th>
-              <th className="border-r border-foreground py-2 px-2 text-left" rowSpan={2}>Particulars</th>
-              <th className="border-r border-foreground py-2 px-1 text-center w-12" rowSpan={2}>HSN</th>
-              <th className="border-r border-foreground py-2 px-1 text-center w-10" rowSpan={2}>QTY</th>
-              <th className="border-r border-foreground py-2 px-1 text-center w-14" rowSpan={2}>RATE</th>
-              <th className="border-r border-foreground py-2 px-1 text-center w-16" rowSpan={2}>AMOUNT</th>
-              <th className="border-r border-foreground py-1 px-1 text-center" colSpan={2}>CGST</th>
-              <th className="border-r border-foreground py-1 px-1 text-center" colSpan={2}>SGST</th>
-              <th className="py-2 px-1 text-center w-16" rowSpan={2}>TOTAL</th>
-            </tr>
-            <tr className="border-b border-foreground bg-muted/30">
-              <th className="border-r border-foreground py-1 px-1 text-center w-10">Tax %</th>
-              <th className="border-r border-foreground py-1 px-1 text-center w-14">AMOUNT</th>
-              <th className="border-r border-foreground py-1 px-1 text-center w-10">Tax %</th>
-              <th className="border-r border-foreground py-1 px-1 text-center w-14">AMOUNT</th>
+            <tr className="border-b border-foreground bg-muted/20">
+              <th className="border-r border-foreground py-2 px-2 text-center w-12 font-bold">SR NO</th>
+              <th className="border-r border-foreground py-2 px-2 text-center font-bold">PARTICULARS</th>
+              <th className="border-r border-foreground py-2 px-2 text-center w-14 font-bold">HSN</th>
+              <th className="border-r border-foreground py-2 px-2 text-center w-12 font-bold">QTY</th>
+              <th className="border-r border-foreground py-2 px-2 text-center w-16 font-bold">RATE</th>
+              <th className="py-2 px-2 text-center w-20 font-bold">AMOUNT</th>
             </tr>
           </thead>
           <tbody>
             {invoice.items.map((item, index) => (
               <tr key={item.id} className="border-b border-foreground">
-                <td className="border-r border-foreground py-2 px-1 text-center">{index + 1}</td>
+                <td className="border-r border-foreground py-2 px-2 text-center">{index + 1}</td>
                 <td className="border-r border-foreground py-2 px-2">{item.name}</td>
-                <td className="border-r border-foreground py-2 px-1 text-center">{item.hsnCode || '-'}</td>
-                <td className="border-r border-foreground py-2 px-1 text-center">{item.qty}</td>
-                <td className="border-r border-foreground py-2 px-1 text-right">{formatNumber(item.rate)}</td>
-                <td className="border-r border-foreground py-2 px-1 text-right">{formatNumber(item.amount)}</td>
-                <td className="border-r border-foreground py-2 px-1 text-center">{item.cgstPercent}%</td>
-                <td className="border-r border-foreground py-2 px-1 text-right">{formatNumber(item.cgstAmount)}</td>
-                <td className="border-r border-foreground py-2 px-1 text-center">{item.sgstPercent}%</td>
-                <td className="border-r border-foreground py-2 px-1 text-right">{formatNumber(item.sgstAmount)}</td>
-                <td className="py-2 px-1 text-right font-medium">{formatNumber(item.total)}</td>
+                <td className="border-r border-foreground py-2 px-2 text-center">{item.hsnCode || '-'}</td>
+                <td className="border-r border-foreground py-2 px-2 text-center">{item.qty}</td>
+                <td className="border-r border-foreground py-2 px-2 text-right">{formatNumber(item.rate)}</td>
+                <td className="py-2 px-2 text-right">{formatNumber(item.amount)}</td>
               </tr>
             ))}
-            {/* Empty rows to fill space */}
-            {Array.from({ length: Math.max(0, 5 - invoice.items.length) }).map((_, i) => (
-              <tr key={`empty-${i}`} className="border-b border-foreground h-8">
-                <td className="border-r border-foreground">&nbsp;</td>
-                <td className="border-r border-foreground">&nbsp;</td>
-                <td className="border-r border-foreground">&nbsp;</td>
-                <td className="border-r border-foreground">&nbsp;</td>
-                <td className="border-r border-foreground">&nbsp;</td>
+            {/* Empty rows */}
+            {Array.from({ length: Math.max(0, 8 - invoice.items.length) }).map((_, i) => (
+              <tr key={`empty-${i}`} className="border-b border-foreground h-7">
                 <td className="border-r border-foreground">&nbsp;</td>
                 <td className="border-r border-foreground">&nbsp;</td>
                 <td className="border-r border-foreground">&nbsp;</td>
@@ -120,91 +113,78 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
                 <td>&nbsp;</td>
               </tr>
             ))}
-            {/* Grand Total Row */}
-            <tr className="bg-muted/30 font-bold">
-              <td className="border-r border-foreground py-2 px-1"></td>
-              <td className="border-r border-foreground py-2 px-2">Grand Total</td>
-              <td className="border-r border-foreground py-2 px-1"></td>
-              <td className="border-r border-foreground py-2 px-1"></td>
-              <td className="border-r border-foreground py-2 px-1"></td>
-              <td className="border-r border-foreground py-2 px-1 text-right">{formatNumber(totals.amount)}</td>
-              <td className="border-r border-foreground py-2 px-1"></td>
-              <td className="border-r border-foreground py-2 px-1 text-right">{formatNumber(totals.cgstAmount)}</td>
-              <td className="border-r border-foreground py-2 px-1"></td>
-              <td className="border-r border-foreground py-2 px-1 text-right">{formatNumber(totals.sgstAmount)}</td>
-              <td className="py-2 px-1 text-right">{formatNumber(totals.total)}</td>
+            {/* Total Row */}
+            <tr className="bg-muted/20 font-bold">
+              <td className="border-r border-foreground py-2 px-2"></td>
+              <td className="border-r border-foreground py-2 px-2 text-center font-bold">TOTAL</td>
+              <td className="border-r border-foreground py-2 px-2"></td>
+              <td className="border-r border-foreground py-2 px-2"></td>
+              <td className="border-r border-foreground py-2 px-2"></td>
+              <td className="py-2 px-2 text-right font-bold">{formatNumber(totals.amount)}</td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      {/* Amount in Words & GST Summary */}
+      {/* Amount in Words & Tax Summary */}
       <div className="grid grid-cols-2 gap-4 mb-4 text-xs">
-        <div className="space-y-2">
-          <div>
-            <p className="font-semibold">Amount Chargeble (In words)</p>
-            <p className="font-medium">RUPEES - {numberToWords(invoice.grandTotal)}</p>
-          </div>
-          <div>
-            <p className="font-semibold">GST Amount (In words)</p>
-            <p>RUPEES - {numberToWords(invoice.gstAmount)}</p>
-          </div>
+        <div>
+          <p className="font-bold mb-1">Amount in Words</p>
+          <p>{numberToWords(invoice.grandTotal)}</p>
         </div>
         <div>
           <table className="w-full border border-foreground">
             <thead>
-              <tr className="bg-muted/30">
-                <th colSpan={2} className="py-1 px-2 text-center border-b border-foreground font-semibold">Summary</th>
+              <tr className="border-b border-foreground">
+                <th className="border-r border-foreground" rowSpan={2}></th>
+                <th className="border-r border-foreground py-1 px-1 text-center font-bold" colSpan={2}>CGST</th>
+                <th className="border-r border-foreground py-1 px-1 text-center font-bold" colSpan={2}>SGST</th>
+                <th className="py-1 px-1 text-center font-bold" rowSpan={2}>TOTAL</th>
+              </tr>
+              <tr className="border-b border-foreground">
+                <th className="border-r border-foreground py-1 px-1 text-center text-[10px]">RATE</th>
+                <th className="border-r border-foreground py-1 px-1 text-center text-[10px]">TAX</th>
+                <th className="border-r border-foreground py-1 px-1 text-center text-[10px]">RATE</th>
+                <th className="border-r border-foreground py-1 px-1 text-center text-[10px]">TAX</th>
               </tr>
             </thead>
             <tbody>
               <tr className="border-b border-foreground">
-                <td className="py-1 px-2 border-r border-foreground">CGST</td>
-                <td className="py-1 px-2 text-right">{formatCurrency(totals.cgstAmount)}</td>
-              </tr>
-              <tr className="border-b border-foreground">
-                <td className="py-1 px-2 border-r border-foreground">SGST</td>
-                <td className="py-1 px-2 text-right">{formatCurrency(totals.sgstAmount)}</td>
-              </tr>
-              <tr className="border-b border-foreground">
-                <td className="py-1 px-2 border-r border-foreground">Total Tax</td>
-                <td className="py-1 px-2 text-right">{formatCurrency(invoice.gstAmount)}</td>
-              </tr>
-              {(invoice.roundOff !== undefined && invoice.roundOff !== 0) && (
-                <tr className="border-b border-foreground">
-                  <td className="py-1 px-2 border-r border-foreground">Round Off</td>
-                  <td className="py-1 px-2 text-right">{invoice.roundOff > 0 ? '+' : ''}{formatNumber(invoice.roundOff)}</td>
-                </tr>
-              )}
-              <tr className="font-bold bg-muted/30">
-                <td className="py-1 px-2 border-r border-foreground">GRAND TOTAL</td>
-                <td className="py-1 px-2 text-right">{formatCurrency(invoice.grandTotal)}</td>
+                <td className="border-r border-foreground py-1 px-1"></td>
+                <td className="border-r border-foreground py-1 px-1 text-center">{invoice.items[0]?.cgstPercent || 0}%</td>
+                <td className="border-r border-foreground py-1 px-1 text-right">{formatNumber(totals.cgstAmount)}</td>
+                <td className="border-r border-foreground py-1 px-1 text-center">{invoice.items[0]?.sgstPercent || 0}%</td>
+                <td className="border-r border-foreground py-1 px-1 text-right">{formatNumber(totals.sgstAmount)}</td>
+                <td className="py-1 px-1 text-right font-bold">{formatNumber(totals.cgstAmount + totals.sgstAmount)}</td>
               </tr>
             </tbody>
           </table>
+          {/* Grand Total under tax box */}
+          <div className="border border-foreground border-t-0 py-1 px-2 text-right">
+            <span className="font-bold">TOTAL: </span>
+            <span className="font-bold">{formatNumber(invoice.grandTotal)}</span>
+          </div>
         </div>
       </div>
 
-      {/* Terms & Bank Details */}
-      <div className="grid grid-cols-2 gap-4 text-xs border-t pt-4">
+      {/* Bank Details & Signature */}
+      <div className="grid grid-cols-2 gap-6 text-xs pt-3">
         <div>
-          <p className="font-semibold mb-1">Terms & Conditions</p>
-          <ol className="list-decimal list-inside space-y-0.5 text-muted-foreground">
-            <li>Goods are dispatched on buyer's risk</li>
-            <li>Interest will be charges @ 12 % if bill is not paid within 7 days.</li>
-            <li>In case of dispute only JAMNAGAR Court Will have JURISDICTION.</li>
-          </ol>
-          <div className="mt-3">
-            <p className="font-semibold">Bank Details</p>
-            <p>Kotak Bank A/c. Number :- 4711625484</p>
-            <p>IFSC Code :- KKBK0002936</p>
-          </div>
+          <p className="font-bold mb-1">BANK DETAILS</p>
+          <p>AU Small Finance Bank</p>
+          <p>2402212258785540.00</p>
+          <p>AUBL0002142</p>
         </div>
         <div className="text-right">
-          <p className="font-semibold italic">For S. K. Enterprise</p>
-          <div className="h-16"></div>
-          <p className="italic text-muted-foreground">Authorised Singture</p>
+          <p className="font-bold italic">for SK ENTERPRISE</p>
+          <div className="h-12"></div>
+          <p className="italic text-muted-foreground">Authorized Signature</p>
         </div>
+      </div>
+
+      {/* Thank you */}
+      <div className="text-center mt-6 py-2 border border-foreground">
+        <p className="font-bold text-xs">!! THANK YOU FOR YOUR BUSINESS !!</p>
       </div>
     </div>
   );

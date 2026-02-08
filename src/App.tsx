@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import CreateInvoice from "./pages/CreateInvoice";
 import SalesRegister from "./pages/SalesRegister";
 import Customers from "./pages/Customers";
+import CustomerDetail from "./pages/CustomerDetail";
 import Items from "./pages/Items";
 import DeliveryChallans from "./pages/DeliveryChallans";
 import Login from "./pages/Login";
@@ -86,6 +87,13 @@ const AppRoutes = () => (
       <ProtectedRoute>
         <AppLayout>
           <Customers />
+        </AppLayout>
+      </ProtectedRoute>
+    } />
+    <Route path="/customers/:id" element={
+      <ProtectedRoute>
+        <AppLayout>
+          <CustomerDetail />
         </AppLayout>
       </ProtectedRoute>
     } />

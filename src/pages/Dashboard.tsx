@@ -40,7 +40,7 @@ export default function Dashboard() {
 
   // Fixed year options from 2023 to 2025
   const yearOptions: MultiSelectOption[] = useMemo(() => {
-    return [2025, 2024, 2023].map(year => ({ value: String(year), label: String(year) }));
+    return [2026, 2025, 2024, 2023].map(year => ({ value: String(year), label: String(year) }));
   }, []);
 
   // Filter invoices based on selected years and months
@@ -92,7 +92,7 @@ export default function Dashboard() {
     <div className="space-y-8">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+          <h1 className="text-2xl font-medium text-foreground">Dashboard</h1>
           <p className="text-muted-foreground mt-1">Welcome back! Here's your business overview.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useData } from '@/context/DataContext';
 import { v4 as uuidv4 } from 'uuid';
 import { InvoiceItem } from '@/types/invoice';
@@ -30,7 +30,9 @@ const createEmptyItem = (): InvoiceItem => ({
 export default function CreateInvoice() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const editId = searchParams.get('edit');
+  const billState = location.state as any;
   
   const { 
     customers, 
@@ -76,17 +78,45 @@ export default function CreateInvoice() {
           setIsRoundOffManual(true);
         }
       }
+    } else if (billState?.fromBill) {
+      // Pre-fill from bill conversion
+      setCustomerName(billState.customerName || '');
+      setGstin(billState.gstin || '');
+      setAddress(billState.address || '');
+      setInvoiceNumber(getNextInvoiceNumber(new Date(date)));
+      
+      // Convert bill items to invoice items
+      const gstRate = billState.gstRate || 18;
+      const cgstPercent = gstRate / 2;
+      const sgstPercent = gstRate / 2;
+      
+      if (billState.items && billState.items.length > 0) {
+        const converted: InvoiceItem[] = billState.items.map((item: any) => {
+          const baseAmount = item.qty * item.rate;
+          const cgstAmount = baseAmount * (cgstPercent / 100);
+          const sgstAmount = baseAmount * (sgstPercent / 100);
+          return {
+            id: uuidv4(),
+            name: item.name,
+            hsnCode: item.hsnCode || '',
+            rate: item.rate,
+            qty: item.qty,
+            cgstPercent,
+            sgstPercent,
+            amount: baseAmount,
+            cgstAmount,
+            sgstAmount,
+            total: baseAmount + cgstAmount + sgstAmount,
+          };
+        });
+        setInvoiceItems(converted);
+      }
+      // Clear location state to prevent re-fill on re-render
+      window.history.replaceState({}, document.title);
     } else {
       setInvoiceNumber(getNextInvoiceNumber(new Date(date)));
     }
   }, [editId, invoices]);
-
-  // Update invoice number when date changes (only for new invoices)
-  useEffect(() => {
-    if (!editId && date) {
-      setInvoiceNumber(getNextInvoiceNumber(new Date(date)));
-    }
-  }, [date, editId, getNextInvoiceNumber]);
 
   const handleCustomerSearch = (value: string) => {
     setCustomerName(value);

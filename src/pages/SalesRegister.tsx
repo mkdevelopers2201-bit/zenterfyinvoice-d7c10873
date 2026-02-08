@@ -73,7 +73,7 @@ export default function SalesRegister() {
 
   // Fixed year options from 2023 to 2025
   const yearOptions: MultiSelectOption[] = useMemo(() => {
-    return [2025, 2024, 2023].map(year => ({ value: String(year), label: String(year) }));
+    return [2026, 2025, 2024, 2023].map(year => ({ value: String(year), label: String(year) }));
   }, []);
 
   // Filter invoices based on search, years, and months
