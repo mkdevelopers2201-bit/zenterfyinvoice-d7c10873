@@ -8,6 +8,51 @@ const formatNumber = (amount: number) => {
   }).format(amount);
 };
 
+interface GstSlab {
+  hsnCode: string;
+  cgstPercent: number;
+  sgstPercent: number;
+  taxableAmount: number;
+  cgstAmount: number;
+  sgstAmount: number;
+  totalTax: number;
+}
+
+function groupByGstSlab(items: Invoice['items']): GstSlab[] {
+  const map = new Map<string, GstSlab>();
+  for (const item of items) {
+    const key = `${item.hsnCode || '-'}_${item.cgstPercent}_${item.sgstPercent}`;
+    const existing = map.get(key);
+    if (existing) {
+      existing.taxableAmount += item.amount;
+      existing.cgstAmount += item.cgstAmount;
+      existing.sgstAmount += item.sgstAmount;
+      existing.totalTax += item.cgstAmount + item.sgstAmount;
+    } else {
+      map.set(key, {
+        hsnCode: item.hsnCode || '-',
+        cgstPercent: item.cgstPercent,
+        sgstPercent: item.sgstPercent,
+        taxableAmount: item.amount,
+        cgstAmount: item.cgstAmount,
+        sgstAmount: item.sgstAmount,
+        totalTax: item.cgstAmount + item.sgstAmount,
+      });
+    }
+  }
+  return Array.from(map.values());
+}
+
+function getFinancialYear(dateStr: string): string {
+  const d = new Date(dateStr);
+  const year = d.getFullYear();
+  const month = d.getMonth(); // 0-based
+  if (month >= 3) {
+    return `${year}-${(year + 1).toString().slice(-2)}`;
+  }
+  return `${year - 1}-${year.toString().slice(-2)}`;
+}
+
 export function generateInvoicePDF(invoice: Invoice): void {
   const totals = {
     amount: invoice.items.reduce((sum, item) => sum + item.amount, 0),
@@ -15,6 +60,8 @@ export function generateInvoicePDF(invoice: Invoice): void {
     sgstAmount: invoice.items.reduce((sum, item) => sum + item.sgstAmount, 0),
     total: invoice.items.reduce((sum, item) => sum + item.total, 0),
   };
+
+  const gstSlabs = groupByGstSlab(invoice.items);
 
   const itemRowsHTML = invoice.items.map((item, index) => `
     <tr>
@@ -36,6 +83,17 @@ export function generateInvoicePDF(invoice: Invoice): void {
     </tr>
   `).join('');
 
+  const gstSlabRowsHTML = gstSlabs.map(slab => `
+    <tr>
+      <td class="text-center">${slab.hsnCode}</td>
+      <td class="text-center">${slab.cgstPercent}%</td>
+      <td class="text-right">${formatNumber(slab.cgstAmount)}</td>
+      <td class="text-center">${slab.sgstPercent}%</td>
+      <td class="text-right">${formatNumber(slab.sgstAmount)}</td>
+      <td class="text-right" style="font-weight:bold">${formatNumber(slab.totalTax)}</td>
+    </tr>
+  `).join('');
+
   const htmlContent = `
 <!DOCTYPE html>
 <html>
@@ -44,7 +102,7 @@ export function generateInvoicePDF(invoice: Invoice): void {
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     @page { size: A4 portrait; margin: 12mm 10mm 12mm 10mm; }
-    body { font-family: 'Poppins', Arial, sans-serif; font-size: 11px; color: #000; margin: 0; }
+    body { font-family: 'Poppins', Arial, sans-serif; font-size: 11px; color: #000; margin: 0; padding: 0; }
     .container { width: 100%; max-width: 210mm; margin: 0 auto; }
     .header { border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 10px; }
     .header-top { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 2px; }
@@ -129,7 +187,7 @@ export function generateInvoicePDF(invoice: Invoice): void {
         <table class="tax-table">
           <thead>
             <tr>
-              <th rowspan="2"></th>
+              <th rowspan="2" class="text-center">HSN</th>
               <th colspan="2" class="text-center">CGST</th>
               <th colspan="2" class="text-center">SGST</th>
               <th rowspan="2" class="text-center">TOTAL</th>
@@ -142,14 +200,7 @@ export function generateInvoicePDF(invoice: Invoice): void {
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td></td>
-              <td class="text-center">${invoice.items[0]?.cgstPercent || 0}%</td>
-              <td class="text-right">${formatNumber(totals.cgstAmount)}</td>
-              <td class="text-center">${invoice.items[0]?.sgstPercent || 0}%</td>
-              <td class="text-right">${formatNumber(totals.sgstAmount)}</td>
-              <td class="text-right" style="font-weight:bold">${formatNumber(totals.cgstAmount + totals.sgstAmount)}</td>
-            </tr>
+            ${gstSlabRowsHTML}
           </tbody>
         </table>
         <div style="border:1px solid #000;border-top:0;padding:4px 6px;text-align:right;font-weight:bold">
@@ -177,13 +228,32 @@ export function generateInvoicePDF(invoice: Invoice): void {
 </html>
 `;
 
-  const printWindow = window.open('', '_blank');
-  if (printWindow) {
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 500);
-  }
+  // Generate PDF using html2pdf.js
+  const element = document.createElement('div');
+  element.innerHTML = htmlContent;
+  document.body.appendChild(element);
+
+  const customerSlug = invoice.customerName.replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-');
+  const fy = getFinancialYear(invoice.date);
+  const filename = `${customerSlug}-${invoice.invoiceNumber}-${fy}.pdf`;
+
+  import('html2pdf.js').then((html2pdfModule) => {
+    const html2pdf = html2pdfModule.default;
+    html2pdf()
+      .set({
+        margin: [10, 10, 10, 10],
+        filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      })
+      .from(element)
+      .save()
+      .then(() => {
+        document.body.removeChild(element);
+      })
+      .catch(() => {
+        document.body.removeChild(element);
+      });
+  });
 }

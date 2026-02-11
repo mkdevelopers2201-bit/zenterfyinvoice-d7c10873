@@ -6,14 +6,42 @@ interface InvoicePreviewProps {
   invoice: Invoice;
 }
 
-export function InvoicePreview({ invoice }: InvoicePreviewProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency', currency: 'INR',
-      minimumFractionDigits: 2, maximumFractionDigits: 2,
-    }).format(amount);
-  };
+interface GstSlab {
+  hsnCode: string;
+  cgstPercent: number;
+  sgstPercent: number;
+  taxableAmount: number;
+  cgstAmount: number;
+  sgstAmount: number;
+  totalTax: number;
+}
 
+function groupByGstSlab(items: Invoice['items']): GstSlab[] {
+  const map = new Map<string, GstSlab>();
+  for (const item of items) {
+    const key = `${item.hsnCode || '-'}_${item.cgstPercent}_${item.sgstPercent}`;
+    const existing = map.get(key);
+    if (existing) {
+      existing.taxableAmount += item.amount;
+      existing.cgstAmount += item.cgstAmount;
+      existing.sgstAmount += item.sgstAmount;
+      existing.totalTax += item.cgstAmount + item.sgstAmount;
+    } else {
+      map.set(key, {
+        hsnCode: item.hsnCode || '-',
+        cgstPercent: item.cgstPercent,
+        sgstPercent: item.sgstPercent,
+        taxableAmount: item.amount,
+        cgstAmount: item.cgstAmount,
+        sgstAmount: item.sgstAmount,
+        totalTax: item.cgstAmount + item.sgstAmount,
+      });
+    }
+  }
+  return Array.from(map.values());
+}
+
+export function InvoicePreview({ invoice }: InvoicePreviewProps) {
   const formatNumber = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
       minimumFractionDigits: 2, maximumFractionDigits: 2,
@@ -26,6 +54,8 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
     sgstAmount: invoice.items.reduce((sum, item) => sum + item.sgstAmount, 0),
     total: invoice.items.reduce((sum, item) => sum + item.total, 0),
   };
+
+  const gstSlabs = groupByGstSlab(invoice.items);
 
   return (
     <div className="bg-card p-6 rounded-lg shadow-sm border text-sm font-sans" id="invoice-preview">
@@ -136,7 +166,7 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
           <table className="w-full border border-foreground">
             <thead>
               <tr className="border-b border-foreground">
-                <th className="border-r border-foreground" rowSpan={2}></th>
+                <th className="border-r border-foreground py-1 px-1 text-center font-bold" rowSpan={2}>HSN</th>
                 <th className="border-r border-foreground py-1 px-1 text-center font-bold" colSpan={2}>CGST</th>
                 <th className="border-r border-foreground py-1 px-1 text-center font-bold" colSpan={2}>SGST</th>
                 <th className="py-1 px-1 text-center font-bold" rowSpan={2}>TOTAL</th>
@@ -149,14 +179,16 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
               </tr>
             </thead>
             <tbody>
-              <tr className="border-b border-foreground">
-                <td className="border-r border-foreground py-1 px-1"></td>
-                <td className="border-r border-foreground py-1 px-1 text-center">{invoice.items[0]?.cgstPercent || 0}%</td>
-                <td className="border-r border-foreground py-1 px-1 text-right">{formatNumber(totals.cgstAmount)}</td>
-                <td className="border-r border-foreground py-1 px-1 text-center">{invoice.items[0]?.sgstPercent || 0}%</td>
-                <td className="border-r border-foreground py-1 px-1 text-right">{formatNumber(totals.sgstAmount)}</td>
-                <td className="py-1 px-1 text-right font-bold">{formatNumber(totals.cgstAmount + totals.sgstAmount)}</td>
-              </tr>
+              {gstSlabs.map((slab, idx) => (
+                <tr key={idx} className="border-b border-foreground">
+                  <td className="border-r border-foreground py-1 px-1 text-center">{slab.hsnCode}</td>
+                  <td className="border-r border-foreground py-1 px-1 text-center">{slab.cgstPercent}%</td>
+                  <td className="border-r border-foreground py-1 px-1 text-right">{formatNumber(slab.cgstAmount)}</td>
+                  <td className="border-r border-foreground py-1 px-1 text-center">{slab.sgstPercent}%</td>
+                  <td className="border-r border-foreground py-1 px-1 text-right">{formatNumber(slab.sgstAmount)}</td>
+                  <td className="py-1 px-1 text-right font-bold">{formatNumber(slab.totalTax)}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
           {/* Grand Total under tax box */}
