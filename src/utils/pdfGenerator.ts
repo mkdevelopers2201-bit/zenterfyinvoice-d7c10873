@@ -9,129 +9,86 @@ export const generateInvoicePDF = (invoice: Invoice) => {
     }).format(num || 0);
   };
 
-  // Pre-calculate totals to avoid logic inside the template
   const totals = invoice.items.reduce((acc, item) => ({
     amount: acc.amount + (item.qty * item.rate),
-    cgstAmount: acc.cgstAmount + (item.cgstAmount || 0),
-    sgstAmount: acc.sgstAmount + (item.sgstAmount || 0)
-  }), { amount: 0, cgstAmount: 0, sgstAmount: 0 });
+  }), { amount: 0 });
 
-  // Map item rows safely
   const itemsRowsHTML = invoice.items.map((item, index) => `
     <tr>
-      <td style="width: 40px;">${index + 1}</td>
-      <td class="particulars-cell">${item.name}</td>
-      <td>${item.hsnCode || '-'}</td>
-      <td>${item.qty}</td>
-      <td>${formatNumber(item.rate)}</td>
-      <td class="amt">${formatNumber(item.qty * item.rate)}</td>
+      <td style="width: 8%; border: 1px solid #000; text-align: center; vertical-align: middle;">${index + 1}</td>
+      <td style="width: 42%; border: 1px solid #000; text-align: left; padding-left: 5px; vertical-align: middle;">${item.name}</td>
+      <td style="width: 12%; border: 1px solid #000; text-align: center; vertical-align: middle;">${item.hsnCode || '-'}</td>
+      <td style="width: 10%; border: 1px solid #000; text-align: center; vertical-align: middle;">${item.qty}</td>
+      <td style="width: 13%; border: 1px solid #000; text-align: center; vertical-align: middle;">${formatNumber(item.rate)}</td>
+      <td style="width: 15%; border: 1px solid #000; text-align: right; padding-right: 5px; vertical-align: middle;">${formatNumber(item.qty * item.rate)}</td>
     </tr>
   `).join('');
 
-  // Fixed Bank Account as a String
-  const bankAccountNumber = "2402212258785540";
-
   return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <style>
-        @page { size: A4; margin: 10mm; }
-        body { font-family: sans-serif; font-size: 11px; margin: 0; padding: 0; color: #000; }
-        .invoice-container { width: 100%; border: 1px solid #000; }
-        
-        .top-header { text-align: center; border-bottom: 1px solid #000; padding: 5px; }
-        .company-name { font-size: 22px; font-weight: bold; margin: 0; }
-        
-        .billing-header { display: flex; width: 100%; border-bottom: 1px solid #000; }
-        .billing-box { width: 50%; padding: 5px; border-right: 1px solid #000; }
-        .details-box { width: 50%; padding: 5px; }
-
-        table { width: 100%; border-collapse: collapse !important; table-layout: fixed; }
-        th, td { 
-          border: 1px solid #000 !important; 
-          padding: 6px 4px !important; 
-          vertical-align: middle !important; 
-          text-align: center !important;
-        }
-        th { background-color: #f2f2f2; }
-        .particulars-cell { text-align: left !important; padding-left: 8px !important; width: 40%; }
-        .amt { text-align: right !important; padding-right: 8px !important; }
-
-        .summary-wrapper { display: flex; width: 100%; border-top: 1px solid #000; }
-        .words-section { width: 60%; padding: 8px; border-right: 1px solid #000; }
-        .tax-section { width: 40%; padding: 5px; }
-        
-        .bank-info { padding: 10px; border-top: 1px solid #000; font-size: 10px; }
-        .signature-box { text-align: right; padding: 10px; border-top: 1px solid #000; height: 60px; }
-      </style>
-    </head>
-    <body>
-      <div class="invoice-container">
-        <div class="top-header">
-          <p style="margin:0;">GSTIN NO: 24CMAPK3117QIZZ</p>
-          <h1 class="company-name">SK ENTERPRISE</h1>
-          <p style="margin:2px 0; font-size: 10px;">SHOP NO 28, SHIV OM CIRCLE, GOLDEN POINT, DARED, PHASE III, JAMNAGAR</p>
-          <h2 style="margin: 5px 0; font-size: 14px; text-decoration: underline;">TAX INVOICE</h2>
+    <div style="font-family: Arial, sans-serif; padding: 20px; color: #000; background: white;">
+      <div style="border: 1px solid #000;">
+        <div style="text-align: center; border-bottom: 1px solid #000; padding: 10px;">
+          <div style="font-size: 10px; text-align: left;">GSTIN: 24CMAPK3117QIZZ</div>
+          <h1 style="margin: 0; font-size: 20px;">SK ENTERPRISE</h1>
+          <div style="font-size: 9px;">SHOP NO 28, SHIV OM CIRCLE, GOLDEN POINT, DARED, PHASE III, JAMNAGAR</div>
+          <h3 style="margin: 5px 0; text-decoration: underline;">TAX INVOICE</h3>
         </div>
 
-        <div class="billing-header">
-          <div class="billing-box">
-            <strong>BILLED TO:</strong><br/>
-            ${invoice.customerName}<br/>
-            ${invoice.customerAddress || ''}<br/>
-            GSTIN: ${invoice.customerGstin || '-'}
-          </div>
-          <div class="details-box">
-            Invoice No: <strong>${invoice.invoiceNumber}</strong><br/>
-            Date: ${new Date(invoice.date).toLocaleDateString('en-GB')}
-          </div>
-        </div>
+        <table style="width: 100%; border-collapse: collapse; border-bottom: 1px solid #000;">
+          <tr>
+            <td style="width: 50%; border: none; border-right: 1px solid #000; text-align: left; padding: 10px; vertical-align: top;">
+              <strong>BILLED TO:</strong><br>
+              ${invoice.customerName}<br>
+              ${invoice.customerAddress || ''}<br>
+              GSTIN: ${invoice.customerGstin || '-'}
+            </td>
+            <td style="width: 50%; border: none; text-align: left; padding: 10px; vertical-align: top;">
+              Invoice No: <strong>${invoice.invoiceNumber}</strong><br>
+              Date: ${new Date(invoice.date).toLocaleDateString('en-GB')}
+            </td>
+          </tr>
+        </table>
 
-        <table>
+        <table style="width: 100%; border-collapse: collapse;">
           <thead>
-            <tr>
-              <th style="width: 40px;">SR</th>
-              <th class="particulars-cell">PARTICULARS</th>
-              <th>HSN</th>
-              <th>QTY</th>
-              <th>RATE</th>
-              <th>AMOUNT</th>
+            <tr style="background: #eee;">
+              <th style="border: 1px solid #000; padding: 5px;">SR</th>
+              <th style="border: 1px solid #000; padding: 5px; text-align: left;">PARTICULARS</th>
+              <th style="border: 1px solid #000; padding: 5px;">HSN</th>
+              <th style="border: 1px solid #000; padding: 5px;">QTY</th>
+              <th style="border: 1px solid #000; padding: 5px;">RATE</th>
+              <th style="border: 1px solid #000; padding: 5px; text-align: right;">AMOUNT</th>
             </tr>
           </thead>
           <tbody>
             ${itemsRowsHTML}
             <tr>
-              <td colspan="5" style="text-align: right !important; font-weight: bold;">TOTAL</td>
-              <td class="amt" style="font-weight: bold;">${formatNumber(totals.amount)}</td>
+              <td colspan="5" style="border: 1px solid #000; text-align: right; padding: 5px; font-weight: bold;">TOTAL</td>
+              <td style="border: 1px solid #000; text-align: right; padding: 5px; font-weight: bold;">${formatNumber(totals.amount)}</td>
             </tr>
           </tbody>
         </table>
 
-        <div class="summary-wrapper">
-          <div class="words-section">
-            <strong>Grand Total in Words:</strong><br/>
+        <div style="display: flex; border-top: 1px solid #000;">
+          <div style="width: 60%; padding: 10px; border-right: 1px solid #000;">
+            <strong>Amount in Words:</strong><br>
             ${numberToWords(invoice.grandTotal)}
           </div>
-          <div class="tax-section" style="text-align: right;">
-            <strong>Grand Total: ${formatNumber(invoice.grandTotal)}</strong>
+          <div style="width: 40%; padding: 10px; text-align: right;">
+            <strong style="font-size: 14px;">Grand Total: ${formatNumber(invoice.grandTotal)}</strong>
           </div>
         </div>
 
-        <div class="bank-info">
-          <strong>BANK DETAILS:</strong><br/>
-          Bank Name: AU Small Finance Bank | 
-          A/c No: ${bankAccountNumber} | 
-          IFSC: AUBL0002142
+        <div style="padding: 10px; border-top: 1px solid #000; font-size: 11px;">
+          <strong>BANK DETAILS:</strong><br>
+          AU Small Finance Bank | A/c No: 2402212258785540 | IFSC: AUBL0002142
         </div>
 
-        <div class="signature-box">
-          For, <strong>SK ENTERPRISE</strong><br/><br/><br/>
+        <div style="padding: 10px; border-top: 1px solid #000; text-align: right; height: 70px;">
+          For, <strong>SK ENTERPRISE</strong><br><br><br>
           Authorized Signatory
         </div>
       </div>
-    </body>
-    </html>
+    </div>
   `;
 };
