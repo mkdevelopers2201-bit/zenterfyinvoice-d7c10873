@@ -123,23 +123,23 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
           </thead>
           <tbody>
             {invoice.items.map((item, index) => (
-              <tr key={item.id} className="border-b border-foreground">
-                <td className="border-r border-foreground py-2 px-2 text-center">{index + 1}</td>
-                <td className="border-r border-foreground py-2 px-2">{item.name}</td>
-                <td className="border-r border-foreground py-2 px-2 text-center">{item.hsnCode || '-'}</td>
-                <td className="border-r border-foreground py-2 px-2 text-center">{item.qty}</td>
-                <td className="border-r border-foreground py-2 px-2 text-right">{formatNumber(item.rate)}</td>
-                <td className="py-2 px-2 text-right">{formatNumber(item.amount)}</td>
+              <tr key={item.id} className="border-b border-foreground/30">
+                <td className="border-r border-foreground/30 py-2 px-2 text-center align-middle">{index + 1}</td>
+                <td className="border-r border-foreground/30 py-2 px-2 align-middle">{item.name}</td>
+                <td className="border-r border-foreground/30 py-2 px-2 text-center align-middle">{item.hsnCode || '-'}</td>
+                <td className="border-r border-foreground/30 py-2 px-2 text-center align-middle">{item.qty}</td>
+                <td className="border-r border-foreground/30 py-2 px-2 text-right align-middle">{formatNumber(item.rate)}</td>
+                <td className="py-2 px-2 text-right align-middle">{formatNumber(item.amount)}</td>
               </tr>
             ))}
             {/* Empty rows */}
-            {Array.from({ length: Math.max(0, 8 - invoice.items.length) }).map((_, i) => (
-              <tr key={`empty-${i}`} className="border-b border-foreground h-7">
-                <td className="border-r border-foreground">&nbsp;</td>
-                <td className="border-r border-foreground">&nbsp;</td>
-                <td className="border-r border-foreground">&nbsp;</td>
-                <td className="border-r border-foreground">&nbsp;</td>
-                <td className="border-r border-foreground">&nbsp;</td>
+            {Array.from({ length: Math.max(0, 20 - invoice.items.length) }).map((_, i) => (
+              <tr key={`empty-${i}`} className="border-b border-foreground/30 h-7">
+                <td className="border-r border-foreground/30">&nbsp;</td>
+                <td className="border-r border-foreground/30">&nbsp;</td>
+                <td className="border-r border-foreground/30">&nbsp;</td>
+                <td className="border-r border-foreground/30">&nbsp;</td>
+                <td className="border-r border-foreground/30">&nbsp;</td>
                 <td>&nbsp;</td>
               </tr>
             ))}
@@ -159,7 +159,9 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
       {/* Amount in Words & Tax Summary */}
       <div className="grid grid-cols-2 gap-4 mb-4 text-xs">
         <div>
-          <p className="font-bold mb-1">Amount in Words</p>
+          <p className="font-bold mb-1">GST Amount in Words</p>
+          <p className="mb-2">{numberToWords(totals.cgstAmount + totals.sgstAmount)}</p>
+          <p className="font-bold mb-1">Grand Total in Words</p>
           <p>{numberToWords(invoice.grandTotal)}</p>
         </div>
         <div>

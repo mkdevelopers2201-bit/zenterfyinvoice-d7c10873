@@ -65,12 +65,12 @@ export function generateInvoicePDF(invoice: Invoice): void {
 
   const itemRowsHTML = invoice.items.map((item, index) => `
     <tr>
-      <td class="border-r py-2 px-2 text-center">${index + 1}</td>
-      <td class="border-r py-2 px-2">${item.name}</td>
-      <td class="border-r py-2 px-2 text-center">${item.hsnCode || '-'}</td>
-      <td class="border-r py-2 px-2 text-center">${item.qty}</td>
-      <td class="border-r py-2 px-2 text-right">${formatNumber(item.rate)}</td>
-      <td class="py-2 px-2 text-right">${formatNumber(item.amount)}</td>
+      <td style="text-align:center;vertical-align:middle">${index + 1}</td>
+      <td style="vertical-align:middle">${item.name}</td>
+      <td style="text-align:center;vertical-align:middle">${item.hsnCode || '-'}</td>
+      <td style="text-align:center;vertical-align:middle">${item.qty}</td>
+      <td style="text-align:right;vertical-align:middle">${formatNumber(item.rate)}</td>
+      <td style="text-align:right;vertical-align:middle">${formatNumber(item.amount)}</td>
     </tr>
   `).join('');
 
@@ -114,8 +114,10 @@ export function generateInvoicePDF(invoice: Invoice): void {
     .info-label { font-weight: 600; min-width: 60px; }
     .info-value { flex: 1; border-bottom: 1px solid #ccc; padding-bottom: 2px; }
     .items-table { width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 10px; font-size: 10px; }
-    .items-table th, .items-table td { border: 1px solid #000; padding: 4px 6px; }
-    .items-table th { font-weight: bold; background-color: #f5f5f5; }
+    .items-table th { border: 1px solid #000; padding: 4px 6px; font-weight: bold; background-color: #f5f5f5; }
+    .items-table td { border-right: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 4px 6px; }
+    .items-table td:last-child { border-right: none; }
+    .items-table .total-row td { border: 1px solid #000; }
     .total-row { font-weight: bold; background-color: #f5f5f5; }
     .summary-section { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 12px; margin-bottom: 12px; }
     .tax-table { width: 100%; border-collapse: collapse; border: 1px solid #000; font-size: 10px; }
@@ -180,7 +182,9 @@ export function generateInvoicePDF(invoice: Invoice): void {
 
     <div class="summary-section">
       <div>
-        <p style="margin-bottom:4px"><strong>Amount in Words</strong></p>
+        <p style="margin-bottom:2px"><strong>GST Amount in Words</strong></p>
+        <p style="margin-bottom:8px">${numberToWords(totals.cgstAmount + totals.sgstAmount)}</p>
+        <p style="margin-bottom:2px"><strong>Grand Total in Words</strong></p>
         <p>${numberToWords(invoice.grandTotal)}</p>
       </div>
       <div>
