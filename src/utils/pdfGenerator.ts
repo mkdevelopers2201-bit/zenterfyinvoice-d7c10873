@@ -65,32 +65,32 @@ export function generateInvoicePDF(invoice: Invoice): void {
 
   const itemRowsHTML = invoice.items.map((item, index) => `
     <tr>
-      <td style="text-align:center;vertical-align:middle">${index + 1}</td>
-      <td style="vertical-align:middle">${item.name}</td>
-      <td style="text-align:center;vertical-align:middle">${item.hsnCode || '-'}</td>
-      <td style="text-align:center;vertical-align:middle">${item.qty}</td>
-      <td style="text-align:right;vertical-align:middle">${formatNumber(item.rate)}</td>
-      <td style="text-align:right;vertical-align:middle">${formatNumber(item.amount)}</td>
+      <td>${index + 1}</td>
+      <td class="particulars">${item.name}</td>
+      <td>${item.hsnCode || '-'}</td>
+      <td>${item.qty}</td>
+      <td class="amt">${formatNumber(item.rate)}</td>
+      <td class="amt">${formatNumber(item.amount)}</td>
     </tr>
   `).join('');
 
   const emptyRowsCount = Math.max(0, 20 - invoice.items.length);
   const emptyRowsHTML = Array.from({ length: emptyRowsCount }).map(() => `
-    <tr>
-      <td class="border-r h-7">&nbsp;</td><td class="border-r">&nbsp;</td>
-      <td class="border-r">&nbsp;</td><td class="border-r">&nbsp;</td>
-      <td class="border-r">&nbsp;</td><td>&nbsp;</td>
+    <tr class="empty-row">
+      <td>&nbsp;</td><td>&nbsp;</td>
+      <td>&nbsp;</td><td>&nbsp;</td>
+      <td>&nbsp;</td><td>&nbsp;</td>
     </tr>
   `).join('');
 
   const gstSlabRowsHTML = gstSlabs.map(slab => `
     <tr>
-      <td class="text-center">${slab.hsnCode}</td>
-      <td class="text-center">${slab.cgstPercent}%</td>
-      <td class="text-right">${formatNumber(slab.cgstAmount)}</td>
-      <td class="text-center">${slab.sgstPercent}%</td>
-      <td class="text-right">${formatNumber(slab.sgstAmount)}</td>
-      <td class="text-right" style="font-weight:bold">${formatNumber(slab.totalTax)}</td>
+      <td>${slab.hsnCode}</td>
+      <td>${slab.cgstPercent}%</td>
+      <td class="amt">${formatNumber(slab.cgstAmount)}</td>
+      <td>${slab.sgstPercent}%</td>
+      <td class="amt">${formatNumber(slab.sgstAmount)}</td>
+      <td class="amt" style="font-weight:bold">${formatNumber(slab.totalTax)}</td>
     </tr>
   `).join('');
 
@@ -101,32 +101,38 @@ export function generateInvoicePDF(invoice: Invoice): void {
   <meta charset="UTF-8">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    @page { size: A4 portrait; margin: 12mm 10mm 12mm 10mm; }
+    @page { size: A4 portrait; margin: 10mm 10mm 10mm 10mm; }
+    * { box-sizing: border-box; }
     body { font-family: 'Poppins', Arial, sans-serif; font-size: 11px; color: #000; margin: 0; padding: 0; }
-    .container { width: 100%; max-width: 210mm; margin: 0 auto; }
-    .header { border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 10px; }
+    .container { width: 100%; max-width: 190mm; margin: 0 auto; height: 277mm; display: flex; flex-direction: column; }
+    .header { border-bottom: 1px solid #000; padding-bottom: 6px; margin-bottom: 8px; }
     .header-top { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 2px; }
-    .company-name { text-align: center; font-size: 28px; font-weight: bold; margin: 4px 0; }
+    .company-name { text-align: center; font-size: 26px; font-weight: bold; margin: 2px 0; }
     .company-address { text-align: center; font-size: 9px; }
-    .tax-title { text-align: center; border: 1px solid #000; padding: 6px 0; margin-bottom: 12px; font-size: 15px; font-weight: bold; }
-    .info-section { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px; font-size: 10px; }
-    .info-row { display: flex; gap: 6px; margin-bottom: 4px; }
-    .info-label { font-weight: 600; min-width: 60px; }
-    .info-value { flex: 1; border-bottom: 1px solid #ccc; padding-bottom: 2px; }
-    .items-table { width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 10px; font-size: 10px; }
-    .items-table th { border: 1px solid #000; padding: 4px 6px; font-weight: bold; background-color: #f5f5f5; }
-    .items-table td { border-right: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 4px 6px; }
-    .items-table td:last-child { border-right: none; }
-    .items-table .total-row td { border: 1px solid #000; }
+    .tax-title { text-align: center; border: 1px solid #000; padding: 4px 0; margin-bottom: 8px; font-size: 14px; font-weight: bold; }
+    .info-section { display: flex; gap: 0; margin-bottom: 8px; font-size: 10px; }
+    .info-left, .info-right { flex: 1; }
+    .info-row { display: flex; gap: 6px; margin-bottom: 3px; align-items: center; }
+    .info-label { font-weight: 600; min-width: 55px; white-space: nowrap; }
+    .info-value { flex: 1; border-bottom: 1px solid #ccc; padding-bottom: 1px; }
+    table { border-collapse: collapse; width: 100%; page-break-inside: avoid; }
+    .items-table { border: 1px solid #000; margin-bottom: 8px; font-size: 10px; }
+    .items-table th, .items-table td { border: 1px solid #000; padding: 3px 5px; text-align: center; vertical-align: middle; }
+    .items-table th { font-weight: bold; background-color: #f5f5f5; }
+    .items-table td.particulars { text-align: left; padding-left: 8px; }
+    .items-table td.amt { text-align: right; }
+    .items-table .empty-row td { border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none; height: 18px; }
     .total-row { font-weight: bold; background-color: #f5f5f5; }
-    .summary-section { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 12px; margin-bottom: 12px; }
-    .tax-table { width: 100%; border-collapse: collapse; border: 1px solid #000; font-size: 10px; }
-    .tax-table th, .tax-table td { border: 1px solid #000; padding: 4px 6px; }
+    .summary-section { display: flex; gap: 10px; margin-bottom: 8px; }
+    .summary-left { flex: 1.2; font-size: 10px; display: flex; flex-direction: column; justify-content: center; }
+    .summary-right { flex: 0.8; }
+    .tax-table { border: 1px solid #000; font-size: 10px; page-break-inside: avoid; }
+    .tax-table th, .tax-table td { border: 1px solid #000; padding: 3px 5px; text-align: center; vertical-align: middle; }
     .tax-table th { font-weight: bold; }
-    .footer-section { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; border-top: 1px solid #000; padding-top: 8px; font-size: 9px; }
-    .text-right { text-align: right; }
-    .text-center { text-align: center; }
-    .thank-you { text-align: center; border: 1px solid #000; padding: 8px; margin-top: 20px; font-weight: bold; font-size: 11px; }
+    .tax-table td.amt { text-align: right; }
+    .footer-section { display: flex; gap: 16px; border-top: 1px solid #000; padding-top: 6px; font-size: 9px; margin-top: auto; }
+    .footer-left { flex: 1; }
+    .footer-right { flex: 1; text-align: right; }
   </style>
 </head>
 <body>
@@ -143,90 +149,88 @@ export function generateInvoicePDF(invoice: Invoice): void {
     <div class="tax-title">TAX INVOICE</div>
 
     <div class="info-section">
-      <div>
+      <div class="info-left">
         <div class="info-row"><span class="info-label">BILLED</span><span class="info-value">${invoice.customerName}</span></div>
         <div class="info-row"><span class="info-label">ADDRESS</span><span class="info-value">${invoice.address || '-'}</span></div>
         <div class="info-row"><span class="info-label">GSTIN</span><span class="info-value">${invoice.gstin || '-'}</span></div>
       </div>
-      <div>
-        <div class="info-row"><span class="info-value">${invoice.invoiceNumber}</span><span class="info-label text-right">INVOICE NUMBER</span></div>
-        <div class="info-row"><span class="info-value">${format(new Date(invoice.date), 'dd/MM/yyyy')}</span><span class="info-label text-right">DATED</span></div>
-        <div class="info-row"><span class="info-value">${invoice.po || '-'}</span><span class="info-label text-right">ORDER NUMBER</span></div>
+      <div class="info-right">
+        <div class="info-row"><span class="info-value">${invoice.invoiceNumber}</span><span class="info-label" style="text-align:right;min-width:auto;margin-left:6px">INVOICE NO</span></div>
+        <div class="info-row"><span class="info-value">${format(new Date(invoice.date), 'dd/MM/yyyy')}</span><span class="info-label" style="text-align:right;min-width:auto;margin-left:6px">DATED</span></div>
+        <div class="info-row"><span class="info-value">${invoice.po || '-'}</span><span class="info-label" style="text-align:right;min-width:auto;margin-left:6px">ORDER NO</span></div>
       </div>
     </div>
 
     <table class="items-table">
       <thead>
         <tr>
-          <th style="width:40px">SR NO</th>
+          <th style="width:35px">SR NO</th>
           <th>PARTICULARS</th>
           <th style="width:50px">HSN</th>
-          <th style="width:40px">QTY</th>
-          <th style="width:60px">RATE</th>
-          <th style="width:80px">AMOUNT</th>
+          <th style="width:35px">QTY</th>
+          <th style="width:55px">RATE</th>
+          <th style="width:75px">AMOUNT</th>
         </tr>
       </thead>
       <tbody>
         ${itemRowsHTML}
         ${emptyRowsHTML}
         <tr class="total-row">
-          <td class="border-r"></td>
-          <td class="border-r text-center" style="font-weight:bold">TOTAL</td>
-          <td class="border-r"></td>
-          <td class="border-r"></td>
-          <td class="border-r"></td>
-          <td class="text-right" style="font-weight:bold">${formatNumber(totals.amount)}</td>
+          <td></td>
+          <td style="font-weight:bold">TOTAL</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td class="amt" style="font-weight:bold">${formatNumber(totals.amount)}</td>
         </tr>
       </tbody>
     </table>
 
     <div class="summary-section">
-      <div>
-        <p style="margin-bottom:2px"><strong>GST Amount in Words</strong></p>
-        <p style="margin-bottom:8px">${numberToWords(totals.cgstAmount + totals.sgstAmount)}</p>
-        <p style="margin-bottom:2px"><strong>Grand Total in Words</strong></p>
-        <p>${numberToWords(invoice.grandTotal)}</p>
+      <div class="summary-left">
+        <p style="margin:0 0 1px 0"><strong>GST Amount in Words</strong></p>
+        <p style="margin:0 0 6px 0">${numberToWords(totals.cgstAmount + totals.sgstAmount)}</p>
+        <p style="margin:0 0 1px 0"><strong>Grand Total in Words</strong></p>
+        <p style="margin:0">${numberToWords(invoice.grandTotal)}</p>
       </div>
-      <div>
+      <div class="summary-right">
         <table class="tax-table">
           <thead>
             <tr>
-              <th rowspan="2" class="text-center">HSN</th>
-              <th colspan="2" class="text-center">CGST</th>
-              <th colspan="2" class="text-center">SGST</th>
-              <th rowspan="2" class="text-center">TOTAL</th>
+              <th rowspan="2">HSN</th>
+              <th colspan="2">CGST</th>
+              <th colspan="2">SGST</th>
+              <th rowspan="2">TOTAL</th>
             </tr>
             <tr>
-              <th class="text-center" style="font-size:9px">RATE</th>
-              <th class="text-center" style="font-size:9px">TAX</th>
-              <th class="text-center" style="font-size:9px">RATE</th>
-              <th class="text-center" style="font-size:9px">TAX</th>
+              <th style="font-size:9px">RATE</th>
+              <th style="font-size:9px">TAX</th>
+              <th style="font-size:9px">RATE</th>
+              <th style="font-size:9px">TAX</th>
             </tr>
           </thead>
           <tbody>
             ${gstSlabRowsHTML}
           </tbody>
         </table>
-        <div style="border:1px solid #000;border-top:0;padding:4px 6px;text-align:right;font-weight:bold">
+        <div style="border:1px solid #000;border-top:0;padding:3px 5px;text-align:right;font-weight:bold;font-size:10px">
           TOTAL: ${formatNumber(invoice.grandTotal)}
         </div>
       </div>
     </div>
 
     <div class="footer-section">
-      <div>
+      <div class="footer-left">
         <strong>BANK DETAILS</strong><br/>
         AU Small Finance Bank<br/>
-        2402212258785540.00<br/>
+        2402212258785540<br/>
         AUBL0002142
       </div>
-      <div class="text-right">
+      <div class="footer-right">
         <p style="font-weight:bold;font-style:italic;margin-bottom:40px">for SK ENTERPRISE</p>
         <p>Authorized Signature</p>
       </div>
     </div>
-
-    <div class="thank-you">!! THANK YOU FOR YOUR BUSINESS !!</div>
   </div>
 </body>
 </html>

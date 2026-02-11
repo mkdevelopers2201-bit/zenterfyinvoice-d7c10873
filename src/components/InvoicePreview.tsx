@@ -206,7 +206,7 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
         <div>
           <p className="font-bold mb-1">BANK DETAILS</p>
           <p>AU Small Finance Bank</p>
-          <p>2402212258785540.00</p>
+          <p>2402212258785540</p>
           <p>AUBL0002142</p>
         </div>
         <div className="text-right">
@@ -216,10 +216,6 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
         </div>
       </div>
 
-      {/* Thank you */}
-      <div className="text-center mt-6 py-2 border border-foreground">
-        <p className="font-bold text-xs">!! THANK YOU FOR YOUR BUSINESS !!</p>
-      </div>
     </div>
   );
 }
