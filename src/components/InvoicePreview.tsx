@@ -58,7 +58,7 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
   const gstSlabs = groupByGstSlab(invoice.items);
 
   return (
-    <div className="bg-card p-6 rounded-lg shadow-sm border border-foreground/40 text-sm font-sans w-full [&_th]:align-middle [&_td]:align-middle" id="invoice-preview">
+    <div className="bg-card p-6 rounded-lg shadow-sm border border-foreground/40 text-sm font-sans w-full [&_table]:border-collapse [&_th]:align-middle [&_th]:leading-[1.2] [&_td]:align-middle [&_td]:leading-[1.2]" id="invoice-preview">
       {/* Company Header */}
       <div className="border-b-2 border-foreground pb-3 mb-4">
         <div className="flex justify-between text-xs text-muted-foreground mb-1">
@@ -113,23 +113,23 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-foreground bg-muted/20">
-              <th className="border-r border-foreground py-2 px-2 text-center w-12 font-bold">SR NO</th>
-              <th className="border-r border-foreground py-2 px-2 text-center font-bold">PARTICULARS</th>
-              <th className="border-r border-foreground py-2 px-2 text-center w-14 font-bold">HSN</th>
-              <th className="border-r border-foreground py-2 px-2 text-center w-12 font-bold">QTY</th>
-              <th className="border-r border-foreground py-2 px-2 text-center w-16 font-bold">RATE</th>
-              <th className="py-2 px-2 text-center w-20 font-bold">AMOUNT</th>
+              <th className="border-r border-foreground py-2 px-[5px] text-center w-12 font-bold align-middle">SR NO</th>
+              <th className="border-r border-foreground py-2 px-[5px] text-center font-bold align-middle">PARTICULARS</th>
+              <th className="border-r border-foreground py-2 px-[5px] text-center w-14 font-bold align-middle">HSN</th>
+              <th className="border-r border-foreground py-2 px-[5px] text-center w-12 font-bold align-middle">QTY</th>
+              <th className="border-r border-foreground py-2 px-[5px] text-center w-16 font-bold align-middle">RATE</th>
+              <th className="py-2 px-[5px] text-center w-20 font-bold align-middle">AMOUNT</th>
             </tr>
           </thead>
           <tbody>
             {invoice.items.map((item, index) => (
               <tr key={item.id} className="border-b border-foreground/30">
-                <td className="border-r border-foreground/30 py-2 px-2 text-center align-middle">{index + 1}</td>
-                <td className="border-r border-foreground/30 py-2 px-2 align-middle">{item.name}</td>
-                <td className="border-r border-foreground/30 py-2 px-2 text-center align-middle">{item.hsnCode || '-'}</td>
-                <td className="border-r border-foreground/30 py-2 px-2 text-center align-middle">{item.qty}</td>
-                <td className="border-r border-foreground/30 py-2 px-2 text-right align-middle">{formatNumber(item.rate)}</td>
-                <td className="py-2 px-2 text-right align-middle">{formatNumber(item.amount)}</td>
+                <td className="border-r border-foreground/30 py-2 px-[5px] text-center align-middle">{index + 1}</td>
+                <td className="border-r border-foreground/30 py-2 px-[5px] align-middle">{item.name}</td>
+                <td className="border-r border-foreground/30 py-2 px-[5px] text-center align-middle">{item.hsnCode || '-'}</td>
+                <td className="border-r border-foreground/30 py-2 px-[5px] text-center align-middle">{item.qty}</td>
+                <td className="border-r border-foreground/30 py-2 px-[5px] text-right align-middle">{formatNumber(item.rate)}</td>
+                <td className="py-2 px-[5px] text-right align-middle">{formatNumber(item.amount)}</td>
               </tr>
             ))}
             {/* Empty rows */}
@@ -145,12 +145,12 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
             ))}
             {/* Total Row */}
             <tr className="bg-muted/20 font-bold">
-              <td className="border-r border-foreground py-2 px-2"></td>
-              <td className="border-r border-foreground py-2 px-2 text-center font-bold">TOTAL</td>
-              <td className="border-r border-foreground py-2 px-2"></td>
-              <td className="border-r border-foreground py-2 px-2"></td>
-              <td className="border-r border-foreground py-2 px-2"></td>
-              <td className="py-2 px-2 text-right font-bold">{formatNumber(totals.amount)}</td>
+              <td className="border-r border-foreground py-2 px-[5px] align-middle"></td>
+              <td className="border-r border-foreground py-2 px-[5px] text-center font-bold align-middle">TOTAL</td>
+              <td className="border-r border-foreground py-2 px-[5px] align-middle"></td>
+              <td className="border-r border-foreground py-2 px-[5px] align-middle"></td>
+              <td className="border-r border-foreground py-2 px-[5px] align-middle"></td>
+              <td className="py-2 px-[5px] text-right font-bold align-middle">{formatNumber(totals.amount)}</td>
             </tr>
           </tbody>
         </table>
