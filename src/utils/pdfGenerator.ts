@@ -8,50 +8,48 @@ export const generateInvoicePDF = async (invoice: Invoice) => {
     throw new Error("Invoice preview element not found");
   }
 
-  // Force vertical alignment on all table cells before capture
-  const allCells = element.querySelectorAll('td, th');
-  allCells.forEach((cell) => {
-    const el = cell as HTMLElement;
-    el.style.verticalAlign = 'middle';
-    el.style.display = 'table-cell';
-    el.style.lineHeight = '1.2';
-    el.style.height = '40px';
-    el.style.padding = '8px 4px';
-  });
+  // STEP 1: Capture the original scroll position and width to prevent shifting
+  const originalWidth = element.style.width;
+  
+  try {
+    // STEP 2: Give the browser 150ms to ensure the preview is fully rendered
+    // This prevents capturing the "stretching" animation
+    await new Promise(resolve => setTimeout(resolve, 150));
 
-  // Force all tr to NOT be flex
-  const allRows = element.querySelectorAll('tr');
-  allRows.forEach((row) => {
-    const el = row as HTMLElement;
-    el.style.display = 'table-row';
-  });
+    const canvas = await html2canvas(element, {
+      scale: 3, // High quality for Pappa's phone
+      useCORS: true,
+      logging: false,
+      backgroundColor: "#ffffff",
+      // Force the width during capture to stop the "Stretch" bug
+      windowWidth: 800, 
+    });
 
-  const canvas = await html2canvas(element, {
-    scale: 2,
-    useCORS: true,
-    logging: false,
-    backgroundColor: "#ffffff",
-  });
+    const imgData = canvas.toDataURL("image/png", 1.0);
+    const pdf = new jsPDF("p", "mm", "a4");
+    
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const margin = 10; // 10mm margin for a clean look
 
-  const imgData = canvas.toDataURL("image/png");
-  const pdf = new jsPDF("p", "mm", "a4");
-  const pdfWidth = pdf.internal.pageSize.getWidth();
-  const pdfHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = pdfWidth - (margin * 2);
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-  const margin = 5; // 5mm equal margin on all sides
-  const imgWidth = pdfWidth - margin * 2;
-  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    // STEP 3: Add image to PDF
+    if (imgHeight <= pdfHeight - (margin * 2)) {
+      pdf.addImage(imgData, "PNG", margin, margin, imgWidth, imgHeight);
+    } else {
+      const fitHeight = pdfHeight - (margin * 2);
+      const fitWidth = (canvas.width * fitHeight) / canvas.height;
+      const xOffset = (pdfWidth - fitWidth) / 2;
+      pdf.addImage(imgData, "PNG", xOffset, margin, fitWidth, fitHeight);
+    }
 
-  if (imgHeight <= pdfHeight - margin * 2) {
-    pdf.addImage(imgData, "PNG", margin, margin, imgWidth, imgHeight);
-  } else {
-    // Scale to fit page height
-    const fitHeight = pdfHeight - margin * 2;
-    const fitWidth = (canvas.width * fitHeight) / canvas.height;
-    const xOffset = (pdfWidth - fitWidth) / 2; // center horizontally
-    pdf.addImage(imgData, "PNG", xOffset, margin, fitWidth, fitHeight);
+    pdf.save(`Invoice_${invoice.invoiceNumber}.pdf`);
+  } catch (error) {
+    console.error("PDF Generation Error:", error);
+  } finally {
+    // Restore original width if it was changed
+    element.style.width = originalWidth;
   }
-
-  const fileName = `Invoice_${invoice.invoiceNumber}.pdf`;
-  pdf.save(fileName);
 };
