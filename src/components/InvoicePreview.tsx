@@ -58,7 +58,7 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
   const gstSlabs = groupByGstSlab(invoice.items);
 
   return (
-    <div className="bg-card p-6 rounded-lg shadow-sm border border-foreground/40 text-sm font-sans w-full" id="invoice-preview">
+    <div className="bg-card p-6 rounded-lg shadow-sm border border-foreground/40 text-sm font-sans w-full [&_th]:align-middle [&_td]:align-middle" id="invoice-preview">
       {/* Company Header */}
       <div className="border-b-2 border-foreground pb-3 mb-4">
         <div className="flex justify-between text-xs text-muted-foreground mb-1">
@@ -79,29 +79,29 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
       {/* Customer & Invoice Info */}
       <div className="grid grid-cols-2 gap-6 mb-4 text-xs">
         <div className="space-y-1">
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             <span className="font-medium w-16">BILLED</span>
             <span className="flex-1 border-b border-foreground/30 pb-1">{invoice.customerName}</span>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             <span className="font-medium w-16">ADDRESS</span>
             <span className="flex-1 border-b border-foreground/30 pb-1">{invoice.address || '-'}</span>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             <span className="font-medium w-16">GSTIN</span>
             <span className="flex-1 border-b border-foreground/30 pb-1">{invoice.gstin || '-'}</span>
           </div>
         </div>
         <div className="space-y-1 text-right">
-          <div className="flex gap-2 justify-end">
+          <div className="flex gap-2 justify-end items-center">
             <span className="flex-1 border-b border-foreground/30 pb-1 text-left">{invoice.invoiceNumber}</span>
             <span className="font-medium">INVOICE NUMBER</span>
           </div>
-          <div className="flex gap-2 justify-end">
+          <div className="flex gap-2 justify-end items-center">
             <span className="flex-1 border-b border-foreground/30 pb-1 text-left">{format(new Date(invoice.date), 'dd/MM/yyyy')}</span>
             <span className="font-medium">DATED</span>
           </div>
-          <div className="flex gap-2 justify-end">
+          <div className="flex gap-2 justify-end items-center">
             <span className="flex-1 border-b border-foreground/30 pb-1 text-left">{invoice.po || '-'}</span>
             <span className="font-medium">ORDER NUMBER</span>
           </div>
@@ -183,12 +183,12 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
             <tbody>
               {gstSlabs.map((slab, idx) => (
                 <tr key={idx} className="border-b border-foreground">
-                  <td className="border-r border-foreground py-1 px-1 text-center">{slab.hsnCode}</td>
-                  <td className="border-r border-foreground py-1 px-1 text-center">{slab.cgstPercent}%</td>
-                  <td className="border-r border-foreground py-1 px-1 text-right">{formatNumber(slab.cgstAmount)}</td>
-                  <td className="border-r border-foreground py-1 px-1 text-center">{slab.sgstPercent}%</td>
-                  <td className="border-r border-foreground py-1 px-1 text-right">{formatNumber(slab.sgstAmount)}</td>
-                  <td className="py-1 px-1 text-right font-bold">{formatNumber(slab.totalTax)}</td>
+                  <td className="border-r border-foreground py-1 px-1 text-center align-middle">{slab.hsnCode}</td>
+                  <td className="border-r border-foreground py-1 px-1 text-center align-middle">{slab.cgstPercent}%</td>
+                  <td className="border-r border-foreground py-1 px-1 text-right align-middle">{formatNumber(slab.cgstAmount)}</td>
+                  <td className="border-r border-foreground py-1 px-1 text-center align-middle">{slab.sgstPercent}%</td>
+                  <td className="border-r border-foreground py-1 px-1 text-right align-middle">{formatNumber(slab.sgstAmount)}</td>
+                  <td className="py-1 px-1 text-right font-bold align-middle">{formatNumber(slab.totalTax)}</td>
                 </tr>
               ))}
             </tbody>
