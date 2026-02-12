@@ -57,8 +57,20 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
 
   const gstSlabs = groupByGstSlab(invoice.items);
 
+  const cellStyle: React.CSSProperties = {
+    verticalAlign: 'middle',
+    height: '40px',
+    display: 'table-cell',
+    lineHeight: '1.2',
+  };
+
+  const thStyle: React.CSSProperties = {
+    ...cellStyle,
+    fontWeight: 'bold',
+  };
+
   return (
-    <div className="bg-card p-6 rounded-lg shadow-sm border border-foreground/40 text-sm font-sans w-full [&_table]:border-collapse [&_th]:align-middle [&_th]:leading-[1.2] [&_td]:align-middle [&_td]:leading-[1.2]" id="invoice-preview">
+    <div className="bg-card p-6 rounded-lg shadow-sm border border-foreground/40 text-sm font-sans w-full [&_table]:border-collapse" id="invoice-preview">
       {/* Company Header */}
       <div className="border-b-2 border-foreground pb-3 mb-4">
         <div className="flex justify-between text-xs text-muted-foreground mb-1">
@@ -113,23 +125,23 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-foreground bg-muted/20">
-              <th className="border-r border-foreground py-2 px-[5px] text-center w-12 font-bold align-middle">SR NO</th>
-              <th className="border-r border-foreground py-2 px-[5px] text-center font-bold align-middle">PARTICULARS</th>
-              <th className="border-r border-foreground py-2 px-[5px] text-center w-14 font-bold align-middle">HSN</th>
-              <th className="border-r border-foreground py-2 px-[5px] text-center w-12 font-bold align-middle">QTY</th>
-              <th className="border-r border-foreground py-2 px-[5px] text-center w-16 font-bold align-middle">RATE</th>
-              <th className="py-2 px-[5px] text-center w-20 font-bold align-middle">AMOUNT</th>
+              <th style={thStyle} className="border-r border-foreground py-2 px-[5px] text-center w-12">SR NO</th>
+              <th style={thStyle} className="border-r border-foreground py-2 px-[5px] text-center">PARTICULARS</th>
+              <th style={thStyle} className="border-r border-foreground py-2 px-[5px] text-center w-14">HSN</th>
+              <th style={thStyle} className="border-r border-foreground py-2 px-[5px] text-center w-12">QTY</th>
+              <th style={thStyle} className="border-r border-foreground py-2 px-[5px] text-center w-16">RATE</th>
+              <th style={thStyle} className="py-2 px-[5px] text-center w-20">AMOUNT</th>
             </tr>
           </thead>
           <tbody>
             {invoice.items.map((item, index) => (
               <tr key={item.id} className="border-b border-foreground/30">
-                <td className="border-r border-foreground/30 py-2 px-[5px] text-center align-middle">{index + 1}</td>
-                <td className="border-r border-foreground/30 py-2 px-[5px] align-middle">{item.name}</td>
-                <td className="border-r border-foreground/30 py-2 px-[5px] text-center align-middle">{item.hsnCode || '-'}</td>
-                <td className="border-r border-foreground/30 py-2 px-[5px] text-center align-middle">{item.qty}</td>
-                <td className="border-r border-foreground/30 py-2 px-[5px] text-right align-middle">{formatNumber(item.rate)}</td>
-                <td className="py-2 px-[5px] text-right align-middle">{formatNumber(item.amount)}</td>
+                <td style={cellStyle} className="border-r border-foreground/30 py-2 px-[5px] text-center">{index + 1}</td>
+                <td style={cellStyle} className="border-r border-foreground/30 py-2 px-[5px]">{item.name}</td>
+                <td style={cellStyle} className="border-r border-foreground/30 py-2 px-[5px] text-center">{item.hsnCode || '-'}</td>
+                <td style={cellStyle} className="border-r border-foreground/30 py-2 px-[5px] text-center">{item.qty}</td>
+                <td style={cellStyle} className="border-r border-foreground/30 py-2 px-[5px] text-right">{formatNumber(item.rate)}</td>
+                <td style={cellStyle} className="py-2 px-[5px] text-right">{formatNumber(item.amount)}</td>
               </tr>
             ))}
             {/* Empty rows */}
@@ -145,12 +157,12 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
             ))}
             {/* Total Row */}
             <tr className="bg-muted/20 font-bold">
-              <td className="border-r border-foreground py-2 px-[5px] align-middle"></td>
-              <td className="border-r border-foreground py-2 px-[5px] text-center font-bold align-middle">TOTAL</td>
-              <td className="border-r border-foreground py-2 px-[5px] align-middle"></td>
-              <td className="border-r border-foreground py-2 px-[5px] align-middle"></td>
-              <td className="border-r border-foreground py-2 px-[5px] align-middle"></td>
-              <td className="py-2 px-[5px] text-right font-bold align-middle">{formatNumber(totals.amount)}</td>
+              <td style={cellStyle} className="border-r border-foreground py-2 px-[5px]"></td>
+              <td style={cellStyle} className="border-r border-foreground py-2 px-[5px] text-center font-bold">TOTAL</td>
+              <td style={cellStyle} className="border-r border-foreground py-2 px-[5px]"></td>
+              <td style={cellStyle} className="border-r border-foreground py-2 px-[5px]"></td>
+              <td style={cellStyle} className="border-r border-foreground py-2 px-[5px]"></td>
+              <td style={cellStyle} className="py-2 px-[5px] text-right font-bold">{formatNumber(totals.amount)}</td>
             </tr>
           </tbody>
         </table>
@@ -168,27 +180,27 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
           <table className="w-full border border-foreground">
             <thead>
               <tr className="border-b border-foreground">
-                <th className="border-r border-foreground py-1 px-1 text-center font-bold" rowSpan={2}>HSN</th>
-                <th className="border-r border-foreground py-1 px-1 text-center font-bold" colSpan={2}>CGST</th>
-                <th className="border-r border-foreground py-1 px-1 text-center font-bold" colSpan={2}>SGST</th>
-                <th className="py-1 px-1 text-center font-bold" rowSpan={2}>TOTAL</th>
+                <th style={thStyle} className="border-r border-foreground py-1 px-1 text-center" rowSpan={2}>HSN</th>
+                <th style={thStyle} className="border-r border-foreground py-1 px-1 text-center" colSpan={2}>CGST</th>
+                <th style={thStyle} className="border-r border-foreground py-1 px-1 text-center" colSpan={2}>SGST</th>
+                <th style={thStyle} className="py-1 px-1 text-center" rowSpan={2}>TOTAL</th>
               </tr>
               <tr className="border-b border-foreground">
-                <th className="border-r border-foreground py-1 px-1 text-center text-[10px]">RATE</th>
-                <th className="border-r border-foreground py-1 px-1 text-center text-[10px]">TAX</th>
-                <th className="border-r border-foreground py-1 px-1 text-center text-[10px]">RATE</th>
-                <th className="border-r border-foreground py-1 px-1 text-center text-[10px]">TAX</th>
+                <th style={thStyle} className="border-r border-foreground py-1 px-1 text-center text-[10px]">RATE</th>
+                <th style={thStyle} className="border-r border-foreground py-1 px-1 text-center text-[10px]">TAX</th>
+                <th style={thStyle} className="border-r border-foreground py-1 px-1 text-center text-[10px]">RATE</th>
+                <th style={thStyle} className="border-r border-foreground py-1 px-1 text-center text-[10px]">TAX</th>
               </tr>
             </thead>
             <tbody>
               {gstSlabs.map((slab, idx) => (
                 <tr key={idx} className="border-b border-foreground">
-                  <td className="border-r border-foreground py-1 px-1 text-center align-middle">{slab.hsnCode}</td>
-                  <td className="border-r border-foreground py-1 px-1 text-center align-middle">{slab.cgstPercent}%</td>
-                  <td className="border-r border-foreground py-1 px-1 text-right align-middle">{formatNumber(slab.cgstAmount)}</td>
-                  <td className="border-r border-foreground py-1 px-1 text-center align-middle">{slab.sgstPercent}%</td>
-                  <td className="border-r border-foreground py-1 px-1 text-right align-middle">{formatNumber(slab.sgstAmount)}</td>
-                  <td className="py-1 px-1 text-right font-bold align-middle">{formatNumber(slab.totalTax)}</td>
+                  <td style={cellStyle} className="border-r border-foreground py-1 px-1 text-center">{slab.hsnCode}</td>
+                  <td style={cellStyle} className="border-r border-foreground py-1 px-1 text-center">{slab.cgstPercent}%</td>
+                  <td style={cellStyle} className="border-r border-foreground py-1 px-1 text-right">{formatNumber(slab.cgstAmount)}</td>
+                  <td style={cellStyle} className="border-r border-foreground py-1 px-1 text-center">{slab.sgstPercent}%</td>
+                  <td style={cellStyle} className="border-r border-foreground py-1 px-1 text-right">{formatNumber(slab.sgstAmount)}</td>
+                  <td style={cellStyle} className="py-1 px-1 text-right font-bold">{formatNumber(slab.totalTax)}</td>
                 </tr>
               ))}
             </tbody>

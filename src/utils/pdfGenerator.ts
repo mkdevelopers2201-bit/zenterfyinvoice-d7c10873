@@ -8,6 +8,24 @@ export const generateInvoicePDF = async (invoice: Invoice) => {
     throw new Error("Invoice preview element not found");
   }
 
+  // Force vertical alignment on all table cells before capture
+  const allCells = element.querySelectorAll('td, th');
+  allCells.forEach((cell) => {
+    const el = cell as HTMLElement;
+    el.style.verticalAlign = 'middle';
+    el.style.display = 'table-cell';
+    el.style.lineHeight = '1.2';
+    el.style.height = '40px';
+    el.style.padding = '8px 4px';
+  });
+
+  // Force all tr to NOT be flex
+  const allRows = element.querySelectorAll('tr');
+  allRows.forEach((row) => {
+    const el = row as HTMLElement;
+    el.style.display = 'table-row';
+  });
+
   const canvas = await html2canvas(element, {
     scale: 2,
     useCORS: true,
