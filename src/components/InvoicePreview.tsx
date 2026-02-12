@@ -58,7 +58,7 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
   const gstSlabs = groupByGstSlab(invoice.items);
 
   return (
-    <div className="bg-card p-6 rounded-lg shadow-sm border text-sm font-sans" id="invoice-preview">
+    <div className="bg-card p-6 rounded-lg shadow-sm border border-foreground/40 text-sm font-sans" id="invoice-preview">
       {/* Company Header */}
       <div className="border-b-2 border-foreground pb-3 mb-4">
         <div className="flex justify-between text-xs text-muted-foreground mb-1">

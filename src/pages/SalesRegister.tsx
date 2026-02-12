@@ -130,9 +130,13 @@ export default function SalesRegister() {
     }
   };
 
-  const handleDownloadPDF = (invoice: Invoice) => {
-    generateInvoicePDF(invoice);
-    toast.success('PDF downloaded successfully');
+  const handleDownloadPDF = async (invoice: Invoice) => {
+    try {
+      await generateInvoicePDF(invoice);
+      toast.success('PDF downloaded successfully');
+    } catch (error) {
+      toast.error('Failed to generate PDF. Please open the invoice preview first.');
+    }
   };
 
   return (
