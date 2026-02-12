@@ -20,15 +20,18 @@ export const generateInvoicePDF = async (invoice: Invoice) => {
   const pdfWidth = pdf.internal.pageSize.getWidth();
   const pdfHeight = pdf.internal.pageSize.getHeight();
 
-  const imgWidth = pdfWidth - 10; // 5mm margin each side
+  const margin = 5; // 5mm equal margin on all sides
+  const imgWidth = pdfWidth - margin * 2;
   const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-  if (imgHeight <= pdfHeight - 10) {
-    pdf.addImage(imgData, "PNG", 5, 5, imgWidth, imgHeight);
+  if (imgHeight <= pdfHeight - margin * 2) {
+    pdf.addImage(imgData, "PNG", margin, margin, imgWidth, imgHeight);
   } else {
-    // Scale to fit page
-    const scale = (pdfHeight - 10) / imgHeight;
-    pdf.addImage(imgData, "PNG", 5, 5, imgWidth * scale, (pdfHeight - 10));
+    // Scale to fit page height
+    const fitHeight = pdfHeight - margin * 2;
+    const fitWidth = (canvas.width * fitHeight) / canvas.height;
+    const xOffset = (pdfWidth - fitWidth) / 2; // center horizontally
+    pdf.addImage(imgData, "PNG", xOffset, margin, fitWidth, fitHeight);
   }
 
   const fileName = `Invoice_${invoice.invoiceNumber}.pdf`;
