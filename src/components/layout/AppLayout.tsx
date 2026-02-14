@@ -11,6 +11,9 @@ import {
   X,
   Receipt
 } from 'lucide-react';
+import { ExtensionDrawer } from '@/components/ExtensionDrawer';
+import { useTranzecfyInstalled } from '@/hooks/useTranzecfyInstalled';
+import tranzecfyLogo from '@/assets/tranzecfy-logo.png';
 import { Button } from '@/components/ui/button';
 import { UserMenu } from './UserMenu';
 
@@ -41,6 +44,7 @@ function NavItem({ to, icon, label, isActive, onClick }: NavItemProps) {
 export function AppLayout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [tranzecfyInstalled] = useTranzecfyInstalled();
 
   const navItems = [
     { to: '/', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
@@ -49,6 +53,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     { to: '/delivery-challans', icon: <Receipt size={20} />, label: 'Delivery Challans' },
     { to: '/customers', icon: <Users size={20} />, label: 'Customers' },
     { to: '/items', icon: <Package size={20} />, label: 'Items' },
+    ...(tranzecfyInstalled ? [{ to: '/tranzecfy', icon: <img src={tranzecfyLogo} alt="T" className="h-5 w-5 rounded" />, label: 'Tranzecfy' }] : []),
   ];
 
   return (
@@ -59,6 +64,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <Receipt className="h-8 w-8 text-primary" />
           <span className="text-xl font-bold text-foreground">Invoice Pro</span>
         </div>
+        <ExtensionDrawer />
         <div className="flex items-center gap-2">
           <UserMenu />
           <Button 
@@ -90,7 +96,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
               <Receipt className="h-8 w-8 text-primary" />
               <span className="text-xl font-bold text-foreground">Invoice Pro</span>
             </div>
-            <div className="hidden lg:block">
+            <div className="hidden lg:flex items-center gap-2">
+              <ExtensionDrawer />
               <UserMenu />
             </div>
           </div>

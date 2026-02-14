@@ -231,16 +231,3 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
     </div>
   );
 }
-
-
-#invoice-preview table {
-  table-layout: fixed !important; /* Forces columns to stay put */
-  width: 100% !important;
-  border-collapse: collapse !important;
-}
-
-#invoice-preview td, #invoice-preview th {
-  vertical-align: middle !important;
-  height: 40px !important; /* Gives a fixed target for vertical centering */
-  display: table-cell !important;
-}

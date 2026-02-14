@@ -13,6 +13,7 @@ import Customers from "./pages/Customers";
 import CustomerDetail from "./pages/CustomerDetail";
 import Items from "./pages/Items";
 import DeliveryChallans from "./pages/DeliveryChallans";
+import Tranzecfy from "./pages/Tranzecfy";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
@@ -108,6 +109,13 @@ const AppRoutes = () => (
       <ProtectedRoute>
         <AppLayout>
           <DeliveryChallans />
+        </AppLayout>
+      </ProtectedRoute>
+    } />
+    <Route path="/tranzecfy" element={
+      <ProtectedRoute>
+        <AppLayout>
+          <Tranzecfy />
         </AppLayout>
       </ProtectedRoute>
     } />
