@@ -49,11 +49,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const navItems = [
     { to: '/', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
     { to: '/create-invoice', icon: <FileText size={20} />, label: 'Create Invoice' },
+    ...(tranzecfyInstalled ? [{ to: '/tranzecfy', icon: <img src={tranzecfyLogo} alt="T" className="h-5 w-5 rounded" />, label: 'Tranzecfy' }] : []),
     { to: '/sales-register', icon: <ListOrdered size={20} />, label: 'Sales Register' },
     { to: '/delivery-challans', icon: <Receipt size={20} />, label: 'Delivery Challans' },
     { to: '/customers', icon: <Users size={20} />, label: 'Customers' },
     { to: '/items', icon: <Package size={20} />, label: 'Items' },
-    ...(tranzecfyInstalled ? [{ to: '/tranzecfy', icon: <img src={tranzecfyLogo} alt="T" className="h-5 w-5 rounded" />, label: 'Tranzecfy' }] : []),
   ];
 
   return (
@@ -61,11 +61,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
       {/* Mobile Header */}
       <div className="lg:hidden flex items-center justify-between p-4 border-b bg-card">
         <div className="flex items-center gap-2">
-          <Receipt className="h-8 w-8 text-primary" />
-          <span className="text-xl font-bold text-foreground">Invoice Pro</span>
+          <Receipt className="h-6 w-6 text-primary" />
+          <span className="text-lg font-bold text-foreground">Zenterfy Invoice</span>
         </div>
-        <ExtensionDrawer />
         <div className="flex items-center gap-2">
+          <ExtensionDrawer />
           <UserMenu />
           <Button 
             variant="ghost" 
@@ -93,8 +93,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
         <div className="p-6">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-2">
-              <Receipt className="h-8 w-8 text-primary" />
-              <span className="text-xl font-bold text-foreground">Invoice Pro</span>
+              <Receipt className="h-7 w-7 text-primary" />
+              <span className="text-lg font-bold text-foreground">Zenterfy Invoice</span>
             </div>
             <div className="hidden lg:flex items-center gap-2">
               <ExtensionDrawer />
