@@ -288,6 +288,69 @@ export type Database = {
         }
         Relationships: []
       }
+      tranzecfy_accounts: {
+        Row: {
+          created_at: string
+          gstin: string | null
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          gstin?: string | null
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          gstin?: string | null
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tranzecfy_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          date: string
+          description: string | null
+          from_account: string | null
+          id: string
+          running_balance: number
+          to_account: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          date?: string
+          description?: string | null
+          from_account?: string | null
+          id?: string
+          running_balance?: number
+          to_account?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date?: string
+          description?: string | null
+          from_account?: string | null
+          id?: string
+          running_balance?: number
+          to_account?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
