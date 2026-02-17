@@ -6,45 +6,20 @@ interface InvoicePreviewProps {
   invoice: Invoice;
 }
 
-interface GstSlab {
-  hsnCode: string;
-  cgstPercent: number;
-  sgstPercent: number;
-  taxableAmount: number;
-  cgstAmount: number;
-  sgstAmount: number;
-  totalTax: number;
-}
-
-function groupByGstSlab(items: Invoice['items']): GstSlab[] {
-  const map = new Map<string, GstSlab>();
-  for (const item of items) {
-    const key = `${item.hsnCode || '-'}_${item.cgstPercent}_${item.sgstPercent}`;
-    const existing = map.get(key);
-    if (existing) {
-      existing.taxableAmount += item.amount;
-      existing.cgstAmount += item.cgstAmount;
-      existing.sgstAmount += item.sgstAmount;
-      existing.totalTax += item.cgstAmount + item.sgstAmount;
-    } else {
-      map.set(key, {
-        hsnCode: item.hsnCode || '-',
-        cgstPercent: item.cgstPercent,
-        sgstPercent: item.sgstPercent,
-        taxableAmount: item.amount,
-        cgstAmount: item.cgstAmount,
-        sgstAmount: item.sgstAmount,
-        totalTax: item.cgstAmount + item.sgstAmount,
-      });
-    }
-  }
-  return Array.from(map.values());
-}
-
 export function InvoicePreview({ invoice }: InvoicePreviewProps) {
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
+
   const formatNumber = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
-      minimumFractionDigits: 2, maximumFractionDigits: 2,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(amount);
   };
 
@@ -55,179 +30,205 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
     total: invoice.items.reduce((sum, item) => sum + item.total, 0),
   };
 
-  const gstSlabs = groupByGstSlab(invoice.items);
-
-  const cellStyle: React.CSSProperties = {
-    verticalAlign: 'middle',
-    height: '40px',
-    display: 'table-cell',
-    lineHeight: '1.2',
-  };
-
-  const thStyle: React.CSSProperties = {
-    ...cellStyle,
-    fontWeight: 'bold',
-  };
-
   return (
-    <div className="bg-card p-6 rounded-lg shadow-sm border border-foreground/40 text-sm font-sans w-full [&_table]:border-collapse" id="invoice-preview">
-      {/* Company Header */}
-      <div className="border-b-2 border-foreground pb-3 mb-4">
-        <div className="flex justify-between text-xs text-muted-foreground mb-1">
-          <span>GSTIN NO - 24CMAPK3117Q1ZZ</span>
-          <span>79907 13846 94283 19484</span>
-        </div>
-        <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-wide">SK ENTERPRISE</h1>
-          <p className="text-xs text-muted-foreground mt-1">SHOP NO 28. SHIV OM CIRCLE, GOLDEN POINT, DARED, PHASE III, JAMNAGAR</p>
-        </div>
-      </div>
+    <>
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          @page { size: A4; margin: 0; }
+          body { margin: 0; }
+          #invoice-preview { 
+            box-shadow: none !important; 
+            border: none !important;
+            margin: 0 !important;
+            padding: 15mm !important;
+          }
+        }
+      `}} />
 
-      {/* Tax Invoice Title */}
-      <div className="text-center border border-foreground py-2 mb-4">
-        <h2 className="text-lg font-bold">TAX INVOICE</h2>
-      </div>
-
-      {/* Customer & Invoice Info */}
-      <div className="grid grid-cols-2 gap-6 mb-4 text-xs">
-        <div className="space-y-1">
-          <div className="flex gap-2 items-center">
-            <span className="font-medium w-16">BILLED</span>
-            <span className="flex-1 border-b border-foreground/30 pb-1">{invoice.customerName}</span>
+      <div 
+        className="bg-white p-8 mx-auto text-sm text-black border shadow-lg print:shadow-none" 
+        id="invoice-preview"
+        style={{ 
+          width: '210mm', 
+          minWidth: '210mm',
+          backgroundColor: 'white'
+        }}
+      >
+        {/* Company Header */}
+        <div className="border-b-2 border-black pb-4 mb-4">
+          <div className="flex justify-between text-[10px] text-gray-600 mb-2">
+            <span>GSTIN - 24CMAPK3117Q1ZZ</span>
+            <span>Mobile - 7990713846</span>
           </div>
-          <div className="flex gap-2 items-center">
-            <span className="font-medium w-16">ADDRESS</span>
-            <span className="flex-1 border-b border-foreground/30 pb-1">{invoice.address || '-'}</span>
-          </div>
-          <div className="flex gap-2 items-center">
-            <span className="font-medium w-16">GSTIN</span>
-            <span className="flex-1 border-b border-foreground/30 pb-1">{invoice.gstin || '-'}</span>
-          </div>
-        </div>
-        <div className="space-y-1 text-right">
-          <div className="flex gap-2 justify-end items-center">
-            <span className="flex-1 border-b border-foreground/30 pb-1 text-left">{invoice.invoiceNumber}</span>
-            <span className="font-medium">INVOICE NUMBER</span>
-          </div>
-          <div className="flex gap-2 justify-end items-center">
-            <span className="flex-1 border-b border-foreground/30 pb-1 text-left">{format(new Date(invoice.date), 'dd/MM/yyyy')}</span>
-            <span className="font-medium">DATED</span>
-          </div>
-          <div className="flex gap-2 justify-end items-center">
-            <span className="flex-1 border-b border-foreground/30 pb-1 text-left">{invoice.po || '-'}</span>
-            <span className="font-medium">ORDER NUMBER</span>
+          <div className="text-center">
+            <h1 className="text-4xl font-bold tracking-tight text-black">S. K. ENTERPRISE</h1>
+            <p className="text-[11px] font-medium mt-1 uppercase">TRADING IN MILIGIAN SPARE & PARTS OR BRASS PARTS</p>
+            <p className="text-[10px] text-gray-700 leading-tight max-w-2xl mx-auto">
+              SHOP NO 28, GOLDEN POINT, COMMERCIAL COMPLEX, NEAR SHIVOM CIRCLE, PHASE - III DARED, JAMNAGAR (GUJARAT) - 361 005
+            </p>
           </div>
         </div>
-      </div>
 
-      {/* Items Table */}
-      <div className="border border-foreground mb-4">
-        <table className="w-full text-xs">
-          <thead>
-            <tr className="border-b border-foreground bg-muted/20">
-              <th style={thStyle} className="border-r border-foreground py-2 px-[5px] text-center w-12">SR NO</th>
-              <th style={thStyle} className="border-r border-foreground py-2 px-[5px] text-center">PARTICULARS</th>
-              <th style={thStyle} className="border-r border-foreground py-2 px-[5px] text-center w-14">HSN</th>
-              <th style={thStyle} className="border-r border-foreground py-2 px-[5px] text-center w-12">QTY</th>
-              <th style={thStyle} className="border-r border-foreground py-2 px-[5px] text-center w-16">RATE</th>
-              <th style={thStyle} className="py-2 px-[5px] text-center w-20">AMOUNT</th>
-            </tr>
-          </thead>
-          <tbody>
-            {invoice.items.map((item, index) => (
-              <tr key={item.id} className="border-b border-foreground/30">
-                <td style={cellStyle} className="border-r border-foreground/30 py-2 px-[5px] text-center">{index + 1}</td>
-                <td style={cellStyle} className="border-r border-foreground/30 py-2 px-[5px]">{item.name}</td>
-                <td style={cellStyle} className="border-r border-foreground/30 py-2 px-[5px] text-center">{item.hsnCode || '-'}</td>
-                <td style={cellStyle} className="border-r border-foreground/30 py-2 px-[5px] text-center">{item.qty}</td>
-                <td style={cellStyle} className="border-r border-foreground/30 py-2 px-[5px] text-right">{formatNumber(item.rate)}</td>
-                <td style={cellStyle} className="py-2 px-[5px] text-right">{formatNumber(item.amount)}</td>
-              </tr>
-            ))}
-            {/* Empty rows */}
-            {Array.from({ length: Math.max(0, 20 - invoice.items.length) }).map((_, i) => (
-              <tr key={`empty-${i}`} className="border-b border-foreground/30 h-7">
-                <td className="border-r border-foreground/30">&nbsp;</td>
-                <td className="border-r border-foreground/30">&nbsp;</td>
-                <td className="border-r border-foreground/30">&nbsp;</td>
-                <td className="border-r border-foreground/30">&nbsp;</td>
-                <td className="border-r border-foreground/30">&nbsp;</td>
-                <td>&nbsp;</td>
-              </tr>
-            ))}
-            {/* Total Row */}
-            <tr className="bg-muted/20 font-bold">
-              <td style={cellStyle} className="border-r border-foreground py-2 px-[5px]"></td>
-              <td style={cellStyle} className="border-r border-foreground py-2 px-[5px] text-center font-bold">TOTAL</td>
-              <td style={cellStyle} className="border-r border-foreground py-2 px-[5px]"></td>
-              <td style={cellStyle} className="border-r border-foreground py-2 px-[5px]"></td>
-              <td style={cellStyle} className="border-r border-foreground py-2 px-[5px]"></td>
-              <td style={cellStyle} className="py-2 px-[5px] text-right font-bold">{formatNumber(totals.amount)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      {/* Amount in Words & Tax Summary */}
-      <div className="grid grid-cols-2 gap-4 mb-4 text-xs">
-        <div>
-          <p className="font-bold mb-1">GST Amount in Words</p>
-          <p className="mb-2">{numberToWords(totals.cgstAmount + totals.sgstAmount)}</p>
-          <p className="font-bold mb-1">Grand Total in Words</p>
-          <p>{numberToWords(invoice.grandTotal)}</p>
+        {/* Tax Invoice Title */}
+        <div className="text-center border-y-2 border-black py-1.5 mb-4 bg-gray-50">
+          <h2 className="text-2xl font-black uppercase tracking-widest">Tax - Invoice</h2>
         </div>
-        <div>
-          <table className="w-full border border-foreground">
+
+        {/* Customer & Invoice Info */}
+        <div className="grid grid-cols-2 gap-8 mb-6 text-[11px]">
+          <div className="space-y-1.5 border-r border-gray-200 pr-4">
+            <p><span className="font-bold text-gray-900">M/s -</span> <span className="text-sm font-semibold uppercase">{invoice.customerName}</span></p>
+            <p className="flex"><span className="font-bold text-gray-900 min-w-[60px]">Address -</span> <span>{invoice.address || '-'}</span></p>
+            <p><span className="font-bold text-gray-900">GSTIN No -</span> {invoice.gstin || '-'}</p>
+          </div>
+          <div className="space-y-1.5 pl-4">
+            <div className="flex justify-between"><span className="font-bold">Invoice Number:</span> <span className="font-semibold">{invoice.invoiceNumber}</span></div>
+            <div className="flex justify-between"><span className="font-bold">Invoice Date:</span> <span>{format(new Date(invoice.date), 'dd/MM/yyyy')}</span></div>
+            <div className="flex justify-between"><span className="font-bold">Reference Number:</span> <span>-</span></div>
+            <div className="flex justify-between"><span className="font-bold">Order No.:</span> <span>{invoice.po || '-'}</span></div>
+          </div>
+        </div>
+
+        {/* Items Table */}
+        <div className="border border-black mb-6">
+          <table className="w-full text-[11px] border-collapse">
             <thead>
-              <tr className="border-b border-foreground">
-                <th style={thStyle} className="border-r border-foreground py-1 px-1 text-center" rowSpan={2}>HSN</th>
-                <th style={thStyle} className="border-r border-foreground py-1 px-1 text-center" colSpan={2}>CGST</th>
-                <th style={thStyle} className="border-r border-foreground py-1 px-1 text-center" colSpan={2}>SGST</th>
-                <th style={thStyle} className="py-1 px-1 text-center" rowSpan={2}>TOTAL</th>
+              <tr className="border-b border-black bg-gray-100">
+                <th className="border-r border-black py-2 px-1 text-center w-8" rowSpan={2}>Sr.</th>
+                <th className="border-r border-black py-2 px-2 text-left" rowSpan={2}>Particulars</th>
+                <th className="border-r border-black py-2 px-1 text-center w-12" rowSpan={2}>HSN</th>
+                <th className="border-r border-black py-2 px-1 text-center w-10" rowSpan={2}>QTY</th>
+                <th className="border-r border-black py-2 px-1 text-center w-16" rowSpan={2}>RATE</th>
+                <th className="border-r border-black py-2 px-1 text-center w-20" rowSpan={2}>AMOUNT</th>
+                <th className="border-r border-black py-1 px-1 text-center" colSpan={2}>CGST</th>
+                <th className="border-r border-black py-1 px-1 text-center" colSpan={2}>SGST</th>
+                <th className="py-2 px-1 text-center w-24" rowSpan={2}>TOTAL</th>
               </tr>
-              <tr className="border-b border-foreground">
-                <th style={thStyle} className="border-r border-foreground py-1 px-1 text-center text-[10px]">RATE</th>
-                <th style={thStyle} className="border-r border-foreground py-1 px-1 text-center text-[10px]">TAX</th>
-                <th style={thStyle} className="border-r border-foreground py-1 px-1 text-center text-[10px]">RATE</th>
-                <th style={thStyle} className="border-r border-foreground py-1 px-1 text-center text-[10px]">TAX</th>
+              <tr className="border-b border-black bg-gray-100">
+                <th className="border-r border-black py-1 px-1 text-center w-10">%</th>
+                <th className="border-r border-black py-1 px-1 text-center w-14">AMOUNT</th>
+                <th className="border-r border-black py-1 px-1 text-center w-10">%</th>
+                <th className="border-r border-black py-1 px-1 text-center w-14">AMOUNT</th>
               </tr>
             </thead>
             <tbody>
-              {gstSlabs.map((slab, idx) => (
-                <tr key={idx} className="border-b border-foreground">
-                  <td style={cellStyle} className="border-r border-foreground py-1 px-1 text-center">{slab.hsnCode}</td>
-                  <td style={cellStyle} className="border-r border-foreground py-1 px-1 text-center">{slab.cgstPercent}%</td>
-                  <td style={cellStyle} className="border-r border-foreground py-1 px-1 text-right">{formatNumber(slab.cgstAmount)}</td>
-                  <td style={cellStyle} className="border-r border-foreground py-1 px-1 text-center">{slab.sgstPercent}%</td>
-                  <td style={cellStyle} className="border-r border-foreground py-1 px-1 text-right">{formatNumber(slab.sgstAmount)}</td>
-                  <td style={cellStyle} className="py-1 px-1 text-right font-bold">{formatNumber(slab.totalTax)}</td>
+              {invoice.items.map((item, index) => (
+                <tr key={item.id} className="border-b border-gray-300">
+                  <td className="border-r border-black py-2 px-1 text-center">{index + 1}</td>
+                  <td className="border-r border-black py-2 px-2 font-medium">{item.name}</td>
+                  <td className="border-r border-black py-2 px-1 text-center">{item.hsnCode || '-'}</td>
+                  <td className="border-r border-black py-2 px-1 text-center font-semibold">{item.qty}</td>
+                  <td className="border-r border-black py-2 px-1 text-right">{formatNumber(item.rate)}</td>
+                  <td className="border-r border-black py-2 px-1 text-right">{formatNumber(item.amount)}</td>
+                  <td className="border-r border-black py-2 px-1 text-center">{item.cgstPercent}%</td>
+                  <td className="border-r border-black py-2 px-1 text-right">{formatNumber(item.cgstAmount)}</td>
+                  <td className="border-r border-black py-2 px-1 text-center">{item.sgstPercent}%</td>
+                  <td className="border-r border-black py-2 px-1 text-right">{formatNumber(item.sgstAmount)}</td>
+                  <td className="py-2 px-1 text-right font-bold">{formatNumber(item.total)}</td>
                 </tr>
               ))}
+              {Array.from({ length: Math.max(0, 8 - invoice.items.length) }).map((_, i) => (
+                <tr key={`empty-${i}`} className="border-b border-gray-300 h-8">
+                  <td className="border-r border-black">&nbsp;</td>
+                  <td className="border-r border-black">&nbsp;</td>
+                  <td className="border-r border-black">&nbsp;</td>
+                  <td className="border-r border-black">&nbsp;</td>
+                  <td className="border-r border-black">&nbsp;</td>
+                  <td className="border-r border-black">&nbsp;</td>
+                  <td className="border-r border-black">&nbsp;</td>
+                  <td className="border-r border-black">&nbsp;</td>
+                  <td className="border-r border-black">&nbsp;</td>
+                  <td className="border-r border-black">&nbsp;</td>
+                  <td>&nbsp;</td>
+                </tr>
+              ))}
+              <tr className="bg-gray-100 font-bold border-t border-black">
+                <td className="border-r border-black py-2 px-1"></td>
+                <td className="border-r border-black py-2 px-2 uppercase italic text-[10px]">Grand Total Items Value</td>
+                <td className="border-r border-black py-2 px-1"></td>
+                <td className="border-r border-black py-2 px-1"></td>
+                <td className="border-r border-black py-2 px-1"></td>
+                <td className="border-r border-black py-2 px-1 text-right">{formatNumber(totals.amount)}</td>
+                <td className="border-r border-black py-2 px-1"></td>
+                <td className="border-r border-black py-2 px-1 text-right">{formatNumber(totals.cgstAmount)}</td>
+                <td className="border-r border-black py-2 px-1"></td>
+                <td className="border-r border-black py-2 px-1 text-right">{formatNumber(totals.sgstAmount)}</td>
+                <td className="py-2 px-1 text-right text-sm underline decoration-double">{formatNumber(totals.total)}</td>
+              </tr>
             </tbody>
           </table>
-          {/* Grand Total under tax box */}
-          <div className="border border-foreground border-t-0 py-1 px-2 text-right">
-            <span className="font-bold">TOTAL: </span>
-            <span className="font-bold">{formatNumber(invoice.grandTotal)}</span>
+        </div>
+
+        {/* Footer Section */}
+        <div className="grid grid-cols-2 gap-8 mb-6 text-[11px]">
+          <div className="space-y-4">
+            <div>
+              <p className="font-bold underline mb-1">Amount Chargeable (In words)</p>
+              <p className="font-semibold uppercase leading-tight bg-gray-50 p-2 border border-dashed border-gray-300">
+                RUPEES - {numberToWords(invoice.grandTotal)} ONLY
+              </p>
+            </div>
+            <div className="text-[10px] space-y-1 border-l-2 border-black pl-3">
+              <p className="font-bold">Bank Details:</p>
+              <p><span className="font-semibold">Bank:</span> Kotak Mahindra Bank</p>
+              <p><span className="font-semibold">A/c No:</span> 4711625484</p>
+              <p><span className="font-semibold">IFSC:</span> KKBK0002936</p>
+            </div>
+          </div>
+          <div>
+            <table className="w-full border border-black border-collapse">
+              <thead>
+                <tr className="bg-gray-100 border-b border-black">
+                  <th colSpan={2} className="py-1 px-2 text-center font-bold uppercase text-[10px]">Tax & Summary</th>
+                </tr>
+              </thead>
+              <tbody className="font-medium">
+                <tr className="border-b border-gray-200">
+                  <td className="py-1.5 px-2 border-r border-black">Taxable Amount</td>
+                  <td className="py-1.5 px-2 text-right">{formatNumber(totals.amount)}</td>
+                </tr>
+                <tr className="border-b border-gray-200 text-gray-700">
+                  <td className="py-1 px-2 border-r border-black italic">Add: CGST</td>
+                  <td className="py-1 px-2 text-right">{formatNumber(totals.cgstAmount)}</td>
+                </tr>
+                <tr className="border-b border-gray-200 text-gray-700">
+                  <td className="py-1 px-2 border-r border-black italic">Add: SGST</td>
+                  <td className="py-1 px-2 text-right">{formatNumber(totals.sgstAmount)}</td>
+                </tr>
+                {(invoice.roundOff !== undefined && invoice.roundOff !== 0) && (
+                  <tr className="border-b border-gray-200">
+                    <td className="py-1 px-2 border-r border-black italic text-gray-500">Round Off (+/-)</td>
+                    <td className="py-1 px-2 text-right">{invoice.roundOff > 0 ? '+' : ''}{formatNumber(invoice.roundOff)}</td>
+                  </tr>
+                )}
+                <tr className="font-black bg-gray-200 text-base">
+                  <td className="py-2 px-2 border-r border-black">NET TOTAL</td>
+                  <td className="py-2 px-2 text-right">{formatCurrency(invoice.grandTotal)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Terms & Auth Sign */}
+        <div className="grid grid-cols-2 gap-4 text-[10px] border-t-2 border-black pt-4">
+          <div className="space-y-1">
+            <p className="font-bold uppercase underline">Terms & Conditions:</p>
+            <ol className="list-decimal list-inside space-y-0.5 text-gray-800 italic">
+              <li>Goods are dispatched on buyer's risk.</li>
+              <li>Interest @ 12% will be charged if not paid within 7 days.</li>
+              <li>Subject to JAMNAGAR Jurisdiction only.</li>
+            </ol>
+          </div>
+          <div className="text-right flex flex-col justify-between items-end">
+            <div className="space-y-0.5">
+              <p className="font-bold text-xs uppercase">For S. K. ENTERPRISE</p>
+              <div className="h-14"></div>
+              <p className="font-bold underline uppercase">Authorised Signature</p>
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Bank Details & Signature */}
-      <div className="grid grid-cols-2 gap-6 text-xs pt-3">
-        <div>
-          <p className="font-bold mb-1">BANK DETAILS</p>
-          <p>AU Small Finance Bank</p>
-          <p>2402212258785540</p>
-          <p>AUBL0002142</p>
-        </div>
-        <div className="text-right">
-          <p className="font-bold italic">for SK ENTERPRISE</p>
-          <div className="h-12"></div>
-          <p className="italic text-muted-foreground">Authorized Signature</p>
-        </div>
-      </div>
-
-    </div>
+    </>
   );
 }
