@@ -78,6 +78,11 @@ export function useChallanData() {
         roundOff: Number(b.round_off) || 0,
         netAmount: Number(b.net_amount) || 0,
         status: (b.status as 'paid' | 'unpaid') || 'unpaid',
+        paymentMethod: (b as any).payment_method || undefined,
+        paymentAmount: Number((b as any).payment_amount) || 0,
+        paymentDate: (b as any).payment_date || undefined,
+        chequeNumber: (b as any).cheque_number || undefined,
+        referenceNumber: (b as any).reference_number || undefined,
         createdAt: b.created_at,
         updatedAt: b.updated_at,
       })));
