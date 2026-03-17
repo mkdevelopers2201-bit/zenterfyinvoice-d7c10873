@@ -19,6 +19,7 @@ export type Database = {
           bill_number: string
           cgst_total: number
           challan_ids: string[]
+          cheque_number: string | null
           created_at: string
           customer_address: string | null
           customer_gstin: string | null
@@ -29,6 +30,10 @@ export type Database = {
           id: string
           items: Json
           net_amount: number
+          payment_amount: number | null
+          payment_date: string | null
+          payment_method: string | null
+          reference_number: string | null
           round_off: number
           sgst_total: number
           status: string
@@ -40,6 +45,7 @@ export type Database = {
           bill_number: string
           cgst_total?: number
           challan_ids?: string[]
+          cheque_number?: string | null
           created_at?: string
           customer_address?: string | null
           customer_gstin?: string | null
@@ -50,6 +56,10 @@ export type Database = {
           id?: string
           items?: Json
           net_amount?: number
+          payment_amount?: number | null
+          payment_date?: string | null
+          payment_method?: string | null
+          reference_number?: string | null
           round_off?: number
           sgst_total?: number
           status?: string
@@ -61,6 +71,7 @@ export type Database = {
           bill_number?: string
           cgst_total?: number
           challan_ids?: string[]
+          cheque_number?: string | null
           created_at?: string
           customer_address?: string | null
           customer_gstin?: string | null
@@ -71,6 +82,10 @@ export type Database = {
           id?: string
           items?: Json
           net_amount?: number
+          payment_amount?: number | null
+          payment_date?: string | null
+          payment_method?: string | null
+          reference_number?: string | null
           round_off?: number
           sgst_total?: number
           status?: string

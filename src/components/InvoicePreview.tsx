@@ -127,4 +127,5 @@ const InvoicePreview = ({ data, items }: InvoicePreviewProps) => {
   );
 };
 
+export { InvoicePreview };
 export default InvoicePreview;
