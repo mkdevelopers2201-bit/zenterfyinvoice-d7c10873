@@ -3,11 +3,14 @@ import { format } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface InvoicePreviewProps {
-  data: any;
-  items: any[];
+  data?: any;
+  items?: any[];
+  invoice?: any;
 }
 
-const InvoicePreview = ({ data, items }: InvoicePreviewProps) => {
+const InvoicePreview = ({ data: dataProp, items: itemsProp, invoice }: InvoicePreviewProps) => {
+  const data = dataProp || invoice || {};
+  const items = itemsProp || data?.items || [];
   const calculateSubtotal = () => items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
   const totalGst = items.reduce((sum, item) => sum + (item.total_gst || 0), 0);
   const grandTotal = calculateSubtotal() + totalGst;
@@ -127,4 +130,5 @@ const InvoicePreview = ({ data, items }: InvoicePreviewProps) => {
   );
 };
 
+export { InvoicePreview };
 export default InvoicePreview;

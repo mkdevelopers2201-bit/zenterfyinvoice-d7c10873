@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '@/context/DataContext';
 import { useChallanData } from '@/hooks/useChallanData';
+import { Bill } from '@/types/challan';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,9 +14,11 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { MultiSelect, MultiSelectOption } from '@/components/ui/multi-select';
-import { ArrowLeft, FileText, Receipt, BookOpen, X, Download } from 'lucide-react';
+import { ArrowLeft, FileText, Receipt, BookOpen, X } from 'lucide-react';
 import { format, getYear, getMonth } from 'date-fns';
 import { CustomerLedger } from '@/components/customer/CustomerLedger';
+import { PaymentDetailsDialog, PaymentDetails } from '@/components/challan/PaymentDetailsDialog';
+import { toast } from 'sonner';
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-IN', {
@@ -44,6 +47,9 @@ export default function CustomerDetail() {
   const [activeTab, setActiveTab] = useState('challans');
   const [selectedYears, setSelectedYears] = useState<string[]>([]);
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [billToPay, setBillToPay] = useState<Bill | null>(null);
 
   const customer = customers.find(c => c.id === id);
 
@@ -88,12 +94,43 @@ export default function CustomerDetail() {
     );
   }
 
-  const handleStatusChange = async (billId: string, status: 'paid' | 'unpaid') => {
-    try {
-      await updateBill(billId, { status });
-    } catch (error) {
-      console.error('Failed to update bill status');
+  const handleStatusChange = (billId: string, status: 'paid' | 'unpaid') => {
+    if (status === 'paid') {
+      const bill = customerBills.find(b => b.id === billId);
+      if (bill) {
+        setBillToPay(bill);
+        setPaymentDialogOpen(true);
+      }
+    } else {
+      updateBill(billId, {
+        status: 'unpaid',
+        paymentMethod: undefined,
+        paymentAmount: 0,
+        paymentDate: undefined,
+        chequeNumber: undefined,
+        referenceNumber: undefined,
+      }).then(() => toast.success('Bill marked as unpaid'))
+        .catch(() => toast.error('Failed to update'));
     }
+  };
+
+  const handlePaymentConfirm = async (details: PaymentDetails) => {
+    if (!billToPay) return;
+    try {
+      await updateBill(billToPay.id, {
+        status: 'paid',
+        paymentMethod: details.paymentMethod,
+        paymentAmount: details.paymentAmount,
+        paymentDate: details.paymentDate,
+        chequeNumber: details.chequeNumber,
+        referenceNumber: details.referenceNumber,
+      });
+      toast.success('Bill marked as paid');
+    } catch {
+      toast.error('Failed to update');
+    }
+    setPaymentDialogOpen(false);
+    setBillToPay(null);
   };
 
   return (
@@ -236,9 +273,19 @@ export default function CustomerDetail() {
         </TabsContent>
 
         <TabsContent value="ledger" className="mt-4">
-          <CustomerLedger customerId={id!} customerName={customer.name} invoices={customerInvoices} />
+          <CustomerLedger customerId={id!} customerName={customer.name} invoices={customerInvoices} bills={customerBills} />
         </TabsContent>
       </Tabs>
+
+      <PaymentDetailsDialog
+        open={paymentDialogOpen}
+        onOpenChange={(open) => {
+          setPaymentDialogOpen(open);
+          if (!open) setBillToPay(null);
+        }}
+        billNetAmount={billToPay?.netAmount || 0}
+        onConfirm={handlePaymentConfirm}
+      />
     </div>
   );
 }
