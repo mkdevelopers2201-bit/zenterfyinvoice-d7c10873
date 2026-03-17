@@ -273,9 +273,19 @@ export default function CustomerDetail() {
         </TabsContent>
 
         <TabsContent value="ledger" className="mt-4">
-          <CustomerLedger customerId={id!} customerName={customer.name} invoices={customerInvoices} />
+          <CustomerLedger customerId={id!} customerName={customer.name} invoices={customerInvoices} bills={customerBills} />
         </TabsContent>
       </Tabs>
+
+      <PaymentDetailsDialog
+        open={paymentDialogOpen}
+        onOpenChange={(open) => {
+          setPaymentDialogOpen(open);
+          if (!open) setBillToPay(null);
+        }}
+        billNetAmount={billToPay?.netAmount || 0}
+        onConfirm={handlePaymentConfirm}
+      />
     </div>
   );
 }
