@@ -41,6 +41,11 @@ export interface Bill {
   roundOff: number;
   netAmount: number;
   status: 'paid' | 'unpaid';
+  paymentMethod?: string;
+  paymentAmount?: number;
+  paymentDate?: string;
+  chequeNumber?: string;
+  referenceNumber?: string;
   createdAt: string;
   updatedAt: string;
 }
