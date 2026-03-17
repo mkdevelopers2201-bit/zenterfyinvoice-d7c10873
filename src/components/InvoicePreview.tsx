@@ -3,8 +3,9 @@ import { format } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface InvoicePreviewProps {
-  data: any;
-  items: any[];
+  data?: any;
+  items?: any[];
+  invoice?: any;
 }
 
 const InvoicePreview = ({ data, items }: InvoicePreviewProps) => {
