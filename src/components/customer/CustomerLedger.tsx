@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Invoice } from '@/types/invoice';
+import { Bill } from '@/types/challan';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -44,20 +45,19 @@ interface CustomerLedgerProps {
   customerId: string;
   customerName: string;
   invoices: Invoice[];
+  bills?: Bill[];
 }
 
-export function CustomerLedger({ customerId, customerName, invoices }: CustomerLedgerProps) {
+export function CustomerLedger({ customerId, customerName, invoices, bills = [] }: CustomerLedgerProps) {
   const [selectedYears, setSelectedYears] = useState<string[]>([]);
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
 
   const ledgerEntries = useMemo(() => {
     const entries: LedgerEntry[] = [];
 
-    // Sort invoices by date
+    // Invoice entries (debit)
     const sorted = [...invoices].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
     sorted.forEach(inv => {
-      // Debit entry - when invoice is created
       entries.push({
         date: inv.date,
         particulars: `Bill No: ${inv.invoiceNumber}`,
@@ -65,7 +65,6 @@ export function CustomerLedger({ customerId, customerName, invoices }: CustomerL
         credit: 0,
       });
 
-      // Credit entry - when paid
       if (inv.status === 'paid') {
         entries.push({
           date: inv.date,
@@ -76,11 +75,43 @@ export function CustomerLedger({ customerId, customerName, invoices }: CustomerL
       }
     });
 
-    // Sort by date
-    entries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    // Bill (challan bill) entries
+    const sortedBills = [...bills].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    sortedBills.forEach(bill => {
+      // Debit entry for each bill
+      entries.push({
+        date: bill.date,
+        particulars: `Bill No: ${bill.billNumber}`,
+        debit: bill.netAmount,
+        credit: 0,
+      });
 
+      // Credit entry only if paid with payment details
+      if (bill.status === 'paid' && bill.paymentAmount && bill.paymentAmount > 0) {
+        let particulars = `Payment Received - ${bill.billNumber}`;
+        if (bill.paymentMethod) {
+          particulars += ` (${bill.paymentMethod}`;
+          if (bill.paymentMethod === 'Cheque' && bill.chequeNumber) {
+            particulars += ` #${bill.chequeNumber}`;
+          }
+          if (bill.paymentMethod === 'NEFT' && bill.referenceNumber) {
+            particulars += ` Ref: ${bill.referenceNumber}`;
+          }
+          particulars += ')';
+        }
+
+        entries.push({
+          date: bill.paymentDate || bill.date,
+          particulars,
+          debit: 0,
+          credit: bill.paymentAmount,
+        });
+      }
+    });
+
+    entries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     return entries;
-  }, [invoices]);
+  }, [invoices, bills]);
 
   const filteredEntries = useMemo(() => {
     return ledgerEntries.filter(entry => {
