@@ -317,23 +317,29 @@ export function useChallanData() {
 
   // Update bill
   const updateBill = async (id: string, updates: Partial<Bill>) => {
-    const { error } = await supabase.from('bills').update({
-      bill_number: updates.billNumber,
-      date: updates.date,
-      customer_id: updates.customerId,
-      customer_name: updates.customerName,
-      customer_gstin: updates.customerGstin,
-      customer_address: updates.customerAddress,
-      challan_ids: updates.challanIds,
-      items: updates.items ? JSON.parse(JSON.stringify(updates.items)) : undefined,
-      subtotal: updates.subtotal,
-      cgst_total: updates.cgstTotal,
-      sgst_total: updates.sgstTotal,
-      gst_amount: updates.gstAmount,
-      round_off: updates.roundOff,
-      net_amount: updates.netAmount,
-      status: updates.status,
-    }).eq('id', id);
+    const updateData: any = {};
+    if (updates.billNumber !== undefined) updateData.bill_number = updates.billNumber;
+    if (updates.date !== undefined) updateData.date = updates.date;
+    if (updates.customerId !== undefined) updateData.customer_id = updates.customerId;
+    if (updates.customerName !== undefined) updateData.customer_name = updates.customerName;
+    if (updates.customerGstin !== undefined) updateData.customer_gstin = updates.customerGstin;
+    if (updates.customerAddress !== undefined) updateData.customer_address = updates.customerAddress;
+    if (updates.challanIds !== undefined) updateData.challan_ids = updates.challanIds;
+    if (updates.items !== undefined) updateData.items = JSON.parse(JSON.stringify(updates.items));
+    if (updates.subtotal !== undefined) updateData.subtotal = updates.subtotal;
+    if (updates.cgstTotal !== undefined) updateData.cgst_total = updates.cgstTotal;
+    if (updates.sgstTotal !== undefined) updateData.sgst_total = updates.sgstTotal;
+    if (updates.gstAmount !== undefined) updateData.gst_amount = updates.gstAmount;
+    if (updates.roundOff !== undefined) updateData.round_off = updates.roundOff;
+    if (updates.netAmount !== undefined) updateData.net_amount = updates.netAmount;
+    if (updates.status !== undefined) updateData.status = updates.status;
+    if (updates.paymentMethod !== undefined) updateData.payment_method = updates.paymentMethod;
+    if (updates.paymentAmount !== undefined) updateData.payment_amount = updates.paymentAmount;
+    if (updates.paymentDate !== undefined) updateData.payment_date = updates.paymentDate;
+    if (updates.chequeNumber !== undefined) updateData.cheque_number = updates.chequeNumber;
+    if (updates.referenceNumber !== undefined) updateData.reference_number = updates.referenceNumber;
+
+    const { error } = await supabase.from('bills').update(updateData).eq('id', id);
 
     if (error) throw error;
     setBills(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
