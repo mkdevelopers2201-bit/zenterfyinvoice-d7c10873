@@ -222,6 +222,17 @@ export function BillsList({ onRefresh }: BillsListProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Payment Details Dialog */}
+      <PaymentDetailsDialog
+        open={paymentDialogOpen}
+        onOpenChange={(open) => {
+          setPaymentDialogOpen(open);
+          if (!open) setBillToPay(null);
+        }}
+        billNetAmount={billToPay?.netAmount || 0}
+        onConfirm={handlePaymentConfirm}
+      />
     </>
   );
 }
