@@ -48,6 +48,9 @@ export default function CustomerDetail() {
   const [selectedYears, setSelectedYears] = useState<string[]>([]);
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
 
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [billToPay, setBillToPay] = useState<Bill | null>(null);
+
   const customer = customers.find(c => c.id === id);
 
   const customerChallans = useMemo(() => {
@@ -90,9 +93,6 @@ export default function CustomerDetail() {
       </div>
     );
   }
-
-  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
-  const [billToPay, setBillToPay] = useState<Bill | null>(null);
 
   const handleStatusChange = (billId: string, status: 'paid' | 'unpaid') => {
     if (status === 'paid') {
