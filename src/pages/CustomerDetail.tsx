@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '@/context/DataContext';
 import { useChallanData } from '@/hooks/useChallanData';
+import { Bill } from '@/types/challan';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,9 +14,11 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { MultiSelect, MultiSelectOption } from '@/components/ui/multi-select';
-import { ArrowLeft, FileText, Receipt, BookOpen, X, Download } from 'lucide-react';
+import { ArrowLeft, FileText, Receipt, BookOpen, X } from 'lucide-react';
 import { format, getYear, getMonth } from 'date-fns';
 import { CustomerLedger } from '@/components/customer/CustomerLedger';
+import { PaymentDetailsDialog, PaymentDetails } from '@/components/challan/PaymentDetailsDialog';
+import { toast } from 'sonner';
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-IN', {
