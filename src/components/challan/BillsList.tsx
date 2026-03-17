@@ -5,40 +5,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from '@/components/ui/table';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { Search, Receipt, Trash2, Eye, CheckCircle, Clock } from 'lucide-react';
+import { Search, Receipt, Trash2, CheckCircle, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { PaymentDetailsDialog, PaymentDetails } from './PaymentDetailsDialog';
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    style: 'currency', currency: 'INR',
+    minimumFractionDigits: 2, maximumFractionDigits: 2,
   }).format(amount);
 };
 
@@ -51,20 +35,55 @@ export function BillsList({ onRefresh }: BillsListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [billToDelete, setBillToDelete] = useState<string | null>(null);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [billToPay, setBillToPay] = useState<Bill | null>(null);
 
   const filteredBills = bills.filter(b => 
     b.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     b.billNumber.toLowerCase().includes(searchTerm.toLowerCase())
   ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  const handleStatusChange = async (billId: string, status: 'paid' | 'unpaid') => {
+  const handleStatusChange = (billId: string, status: 'paid' | 'unpaid') => {
+    if (status === 'paid') {
+      const bill = bills.find(b => b.id === billId);
+      if (bill) {
+        setBillToPay(bill);
+        setPaymentDialogOpen(true);
+      }
+    } else {
+      // Marking as unpaid - clear payment details
+      updateBill(billId, { 
+        status: 'unpaid', 
+        paymentMethod: undefined, 
+        paymentAmount: 0, 
+        paymentDate: undefined,
+        chequeNumber: undefined,
+        referenceNumber: undefined,
+      }).then(() => {
+        toast.success('Bill marked as unpaid');
+        onRefresh();
+      }).catch(() => toast.error('Failed to update bill status'));
+    }
+  };
+
+  const handlePaymentConfirm = async (details: PaymentDetails) => {
+    if (!billToPay) return;
     try {
-      await updateBill(billId, { status });
-      toast.success(`Bill marked as ${status}`);
+      await updateBill(billToPay.id, {
+        status: 'paid',
+        paymentMethod: details.paymentMethod,
+        paymentAmount: details.paymentAmount,
+        paymentDate: details.paymentDate,
+        chequeNumber: details.chequeNumber,
+        referenceNumber: details.referenceNumber,
+      });
+      toast.success('Bill marked as paid');
       onRefresh();
-    } catch (error) {
+    } catch {
       toast.error('Failed to update bill status');
     }
+    setPaymentDialogOpen(false);
+    setBillToPay(null);
   };
 
   const handleDelete = async () => {
